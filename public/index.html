@@ -141,6 +141,21 @@
     #floatingSurveyBtn:hover {
       background: #006fe0;
     }
+
+    @media (max-width: 700px) {
+      #topbar {
+        right: 10px;
+        max-width: calc(100vw - 20px);
+        box-sizing: border-box;
+        flex-wrap: wrap;
+        transform: none;
+      }
+      #topbar button { min-height: 40px; }
+      #topbar .divider { display: none; }
+      .leaflet-top.leaflet-left { margin-top: 130px; }
+      #settingsPanel { top: 140px; box-sizing: border-box; }
+      #floatingSurveyBtn { top: 345px; }
+    }
   </style>
 </head>
 
@@ -149,7 +164,7 @@
   <!-- Topbar (smaller now) -->
   <div id="topbar">
     <span class="pill">Default Alt (m):</span>
-    <input id="altInput" type="number" value="10" step="1" min="1" max="20" />
+    <input id="altInput" type="number" value="10" step="1" min="1" max="500" />
 
     <span class="divider"></span>
     <button id="settingsBtn" title="Camera, overlap and turnaround settings">Parameters</button>
@@ -196,7 +211,7 @@
   </div>
 
   <!-- ROUND FLOATING BUTTON -->
-  <button id="floatingSurveyBtn" onclick="sendPolygonToServer()">▶</button>
+  <button id="floatingSurveyBtn" title="Generate survey route" aria-label="Generate survey route" onclick="sendPolygonToServer()">▶</button>
 
   <div id="map"></div>
 
