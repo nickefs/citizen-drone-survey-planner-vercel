@@ -2,7 +2,10 @@ node_modules/
 survey_cli
 survey_cli.exe
 build/
+.vercel/
 .env
 *.log
 .DS_Store
 Thumbs.db
+.vercel
+.env*

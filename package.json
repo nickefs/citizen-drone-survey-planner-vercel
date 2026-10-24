@@ -4,7 +4,9 @@
   "description": "Web-based UAV survey waypoint generator using Leaflet, Node.js and a C++ survey engine.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "node scripts/build-cli.js",
+    "test": "node --test"
   },
   "keywords": [
     "uav",
