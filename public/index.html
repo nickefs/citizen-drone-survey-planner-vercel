@@ -2,218 +2,31 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Survey Planner (Esri Satellite)</title>
+  <title>UAV Survey Planner | Plan and export waypoints</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Draw a survey area, generate UAV waypoints and export a flight route for review." />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-
-  <style>
-    html, body { height:100%; margin:0; }
-    .leaflet-top.leaflet-left { margin-top: 60px; }
-
-    /* ---------- SMALLER TOPBAR ---------- */
-    #topbar {
-      position: fixed;
-      z-index: 1000;
-      top: 10px;
-      left: 10px;
-      background: rgba(255,255,255,0.95);
-      padding: 4px 8px;          /* μικρότερο */
-      border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.15);
-      font-family: system-ui, sans-serif;
-      display:flex;
-      gap:6px;
-      align-items:center;
-      transform: scale(0.90);    /* μικραίνει όλη τη μπάρα */
-      transform-origin: top left;
-    }
-
-    #map { height: 100%; }
-
-    button {
-      padding:6px 10px;
-      border-radius:6px;
-      border:1px solid #ccc;
-      background:#f6f6f6;
-      cursor:pointer;
-    }
-
-    button:hover { background:#eee; }
-    button.active { background:#ffe08a; border-color:#d6b35f; }
-
-    input[type="number"] {
-      width: 74px;
-      padding:4px 6px;
-    }
-
-    .pill { font-size:12px; color:#555; }
-    .divider { width:1px; height:24px; background:#ddd; margin:0 2px; }
-
-    #settingsPanel {
-      position: fixed;
-      z-index: 1300;
-      top: 58px;
-      left: 10px;
-      width: min(360px, calc(100vw - 20px));
-      background: rgba(255,255,255,0.98);
-      border: 1px solid #d8d8d8;
-      border-radius: 6px;
-      box-shadow: 0 8px 28px rgba(0,0,0,.22);
-      font-family: system-ui, sans-serif;
-      padding: 12px;
-      display: none;
-    }
-
-    #settingsPanel.open { display: block; }
-
-    .settingsHeader {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom: 10px;
-    }
-
-    .settingsTitle {
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .settingsGrid {
-      display:grid;
-      grid-template-columns: 1fr 88px 88px;
-      gap: 8px;
-      align-items:center;
-    }
-
-    .settingsGrid label {
-      font-size: 12px;
-      color:#444;
-    }
-
-    .settingsGrid .wide {
-      grid-column: span 2;
-      width: auto;
-    }
-
-    .settingsHint {
-      margin-top: 10px;
-      font-size: 12px;
-      color:#666;
-    }
-
-    .gsdReadout {
-      margin-top: 10px;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      background:#f7f7f7;
-      font-size: 12px;
-      color:#333;
-      display:flex;
-      justify-content:space-between;
-      gap: 8px;
-    }
-
-    .gsdValue {
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    /* ---------- ROUND FLOATING BUTTON ---------- */
-    #floatingSurveyBtn {
-      position: fixed;
-      top: 280px;   /* φαίνεται κάτω από το delete tool */
-      left: 7px;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: none;
-      background: #0084ff;
-      color: white;
-      font-size: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-      z-index: 1200;
-    }
-
-    #floatingSurveyBtn:hover {
-      background: #006fe0;
-    }
-
-    @media (max-width: 700px) {
-      #topbar {
-        right: 10px;
-        max-width: calc(100vw - 20px);
-        box-sizing: border-box;
-        flex-wrap: wrap;
-        transform: none;
-      }
-      #topbar button { min-height: 40px; }
-      #topbar .divider { display: none; }
-      .leaflet-top.leaflet-left { margin-top: 130px; }
-      #settingsPanel { top: 140px; box-sizing: border-box; }
-      #floatingSurveyBtn { top: 345px; }
-    }
-  </style>
+  <link rel="stylesheet" href="/app.css" />
 </head>
 
 <body>
 
-  <!-- Topbar (smaller now) -->
-  <div id="topbar">
-    <span class="pill">Default Alt (m):</span>
-    <input id="altInput" type="number" value="10" step="1" min="1" max="500" />
+  <main class="workspace">
+    <aside class="sidebar" aria-label="Survey controls">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">◎</span><span>SURVEY <strong>PLANNER</strong></span></div>
+      <div class="sidebar-heading"><span class="eyebrow">FLIGHT PLANNING</span><h1>Plan your survey</h1><p>Draw an area, choose your flight settings, and review the route before exporting it.</p></div>
 
-    <span class="divider"></span>
-    <button id="settingsBtn" title="Camera, overlap and turnaround settings">Parameters</button>
-    <button id="setHomeBtn" title="Click then click on map">Set Home</button>
-    <button id="clearHomeBtn" title="Remove Home marker">Clear Home</button>
+      <section class="control-section" aria-labelledby="area-title"><div class="section-heading"><span class="step-number">01</span><h2 id="area-title">Survey area</h2></div><p>Use the polygon tool on the map to outline the area you want to cover.</p><p id="areaStatus" class="inline-state">No area drawn yet</p></section>
 
-    <button id="exportCsvBtn">Export CSV</button>
+      <section class="control-section" aria-labelledby="flight-title"><div class="section-heading"><span class="step-number">02</span><h2 id="flight-title">Flight settings</h2></div><label class="field-label" for="altInput">Altitude above ground <span>metres</span></label><input id="altInput" type="number" value="10" step="1" min="1" max="500" inputmode="decimal" /><div class="setting-row"><button id="setHomeBtn" type="button" title="Choose a takeoff point on the map">Set home point</button><button id="clearHomeBtn" type="button" title="Remove the home point" disabled>Clear</button></div><p id="homeStatus" class="field-hint">Optional: choose where the aircraft starts.</p><button id="settingsBtn" class="settings-toggle" type="button" aria-controls="settingsPanel">Camera and overlap settings <span aria-hidden="true">⌄</span></button>
+        <div id="settingsPanel" aria-labelledby="settingsTitle"><div class="settingsHeader"><div id="settingsTitle" class="settingsTitle">Camera and overlap</div><button id="closeSettingsBtn" type="button" aria-label="Close settings">Close</button></div><div class="settingsGrid"><label for="sensorWidthInput">Sensor W/H (mm)</label><input id="sensorWidthInput" aria-label="Sensor width in millimetres" type="number" value="3.68" step="0.01" min="0.01" /><input id="sensorHeightInput" aria-label="Sensor height in millimetres" type="number" value="2.76" step="0.01" min="0.01" /><label for="focalLengthInput">Focal length (mm)</label><input id="focalLengthInput" class="wide" type="number" value="3.04" step="0.01" min="0.01" /><label for="imageWidthInput">Image W/H (px)</label><input id="imageWidthInput" aria-label="Image width in pixels" type="number" value="3280" step="1" min="1" /><input id="imageHeightInput" aria-label="Image height in pixels" type="number" value="2474" step="1" min="1" /><label for="frontOverlapInput">Overlap F/S (%)</label><input id="frontOverlapInput" aria-label="Front overlap percentage" type="number" value="25" step="1" min="0" max="95" /><input id="sideOverlapInput" aria-label="Side overlap percentage" type="number" value="25" step="1" min="0" max="95" /><label for="turnaroundInput">Turnaround (m)</label><input id="turnaroundInput" class="wide" type="number" value="3" step="0.5" min="0" max="100" /></div><div class="gsdReadout"><span>Estimated ground resolution</span><strong id="gsdValue" class="gsdValue">-- cm/px</strong></div><p class="settingsHint">These settings apply when you generate the route.</p></div>
+      </section>
 
-    <!-- Generate Survey REMOVED from here -->
-  </div>
-
-  <div id="settingsPanel" role="dialog" aria-modal="false" aria-labelledby="settingsTitle">
-    <div class="settingsHeader">
-      <div id="settingsTitle" class="settingsTitle">Survey Parameters</div>
-      <button id="closeSettingsBtn" title="Close parameters">Close</button>
-    </div>
-
-    <div class="settingsGrid">
-      <label for="sensorWidthInput">Sensor W/H (mm)</label>
-      <input id="sensorWidthInput" type="number" value="3.68" step="0.01" min="0.01" />
-      <input id="sensorHeightInput" type="number" value="2.76" step="0.01" min="0.01" />
-
-      <label for="focalLengthInput">Focal length (mm)</label>
-      <input id="focalLengthInput" class="wide" type="number" value="3.04" step="0.01" min="0.01" />
-
-      <label for="imageWidthInput">Image W/H (px)</label>
-      <input id="imageWidthInput" type="number" value="3280" step="1" min="1" />
-      <input id="imageHeightInput" type="number" value="2474" step="1" min="1" />
-
-      <label for="frontOverlapInput">Overlap F/S (%)</label>
-      <input id="frontOverlapInput" type="number" value="25" step="1" min="0" max="95" />
-      <input id="sideOverlapInput" type="number" value="25" step="1" min="0" max="95" />
-
-      <label for="turnaroundInput">Turnaround (m)</label>
-      <input id="turnaroundInput" class="wide" type="number" value="3" step="0.5" min="0" max="100" />
-    </div>
-
-    <div class="gsdReadout">
-      <span>GSD</span>
-      <span id="gsdValue" class="gsdValue">-- cm/px</span>
-    </div>
-
-    <div class="settingsHint">Changes apply the next time you press the blue button.</div>
-  </div>
-
-  <!-- ROUND FLOATING BUTTON -->
-  <button id="floatingSurveyBtn" title="Generate survey route" aria-label="Generate survey route" onclick="sendPolygonToServer()">▶</button>
-
-  <div id="map"></div>
+      <section class="control-section action-section" aria-labelledby="route-title"><div class="section-heading"><span class="step-number">03</span><h2 id="route-title">Generate route</h2></div><button id="floatingSurveyBtn" class="primary-action" type="button" onclick="sendPolygonToServer()">Generate survey route <span aria-hidden="true">→</span></button><p id="routeStatus" class="route-status" role="status" aria-live="polite">Draw an area to get started.</p><div id="routeResult" class="route-result" hidden><span>Waypoints</span><strong id="waypointCount">0</strong></div><button id="exportCsvBtn" class="export-action" type="button" disabled>Download waypoint CSV <span aria-hidden="true">↓</span></button><p class="safety-note">Review the route against terrain, airspace, and aircraft limits before flying.</p></section>
+    </aside>
+    <section class="map-pane" aria-label="Interactive survey map"><div class="map-banner"><span class="map-banner-icon" aria-hidden="true">⌖</span><span>Choose the polygon tool on the map to draw your survey area.</span></div><div id="map"></div></section>
+  </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
@@ -256,7 +69,7 @@
     }
 
     function computeGsdCmPerPixel() {
-      const altitude = readRangeNumber('altInput', DEFAULT_ALT, 1, 20);
+      const altitude = readRangeNumber('altInput', DEFAULT_ALT, 1, 500);
       const sensorWidth = readPositiveNumber('sensorWidthInput', DEFAULT_CAMERA.sensor_width_mm);
       const sensorHeight = readPositiveNumber('sensorHeightInput', DEFAULT_CAMERA.sensor_height_mm);
       const focalLength = readPositiveNumber('focalLengthInput', DEFAULT_CAMERA.focal_length_mm);
@@ -279,7 +92,7 @@
       el.addEventListener('blur', updateGsdReadout);
     }
 
-    bindClamp('altInput', 1, 20);
+    bindClamp('altInput', 1, 500);
     bindClamp('frontOverlapInput', 0, 95);
     bindClamp('sideOverlapInput', 0, 95);
     bindClamp('turnaroundInput', 0, 100);
@@ -303,7 +116,6 @@
       settingsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
-    settingsBtn.setAttribute('aria-haspopup', 'dialog');
     settingsBtn.setAttribute('aria-expanded', 'false');
     settingsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -337,27 +149,59 @@
       homeMarker.bindPopup("Home").openPopup();
       homeMarker.on("dragend", () => {
         homeLatLng = homeMarker.getLatLng();
+        if (lastWaypoints.length) clearRoute();
       });
+      if (lastWaypoints.length) clearRoute();
     }
 
     const setHomeBtn = document.getElementById("setHomeBtn");
     const clearHomeBtn = document.getElementById("clearHomeBtn");
+    const routeStatus = document.getElementById('routeStatus');
+    const areaStatus = document.getElementById('areaStatus');
+    const homeStatus = document.getElementById('homeStatus');
+    const generateBtn = document.getElementById('floatingSurveyBtn');
+    const exportBtn = document.getElementById('exportCsvBtn');
+    const routeResult = document.getElementById('routeResult');
+    const waypointCount = document.getElementById('waypointCount');
+
+    function showStatus(message, kind = '') {
+      routeStatus.textContent = message;
+      routeStatus.className = `route-status ${kind}`;
+    }
+
+    function clearRoute() {
+      surveyLayer.clearLayers();
+      lastWaypoints = [];
+      exportBtn.disabled = true;
+      routeResult.hidden = true;
+      waypointCount.textContent = '0';
+      showStatus('Area changed. Generate a new route to continue.');
+    }
+    for (const id of ['altInput', 'sensorWidthInput', 'sensorHeightInput', 'focalLengthInput', 'imageWidthInput', 'imageHeightInput', 'frontOverlapInput', 'sideOverlapInput', 'turnaroundInput']) {
+      document.getElementById(id).addEventListener('input', () => {
+        if (lastWaypoints.length) clearRoute();
+      });
+    }
 
     setHomeBtn.addEventListener("click", () => {
       pickHomeMode = !pickHomeMode;
       setHomeBtn.classList.toggle("active", pickHomeMode);
-      setHomeBtn.textContent = pickHomeMode ? "Click map…" : "Set Home";
+      setHomeBtn.textContent = pickHomeMode ? "Click the map" : "Set home point";
+      homeStatus.textContent = pickHomeMode ? 'Click a point on the map to set home.' : (homeLatLng ? 'Home point set. Drag its marker to move it.' : 'Optional: choose where the aircraft starts.');
     });
 
     clearHomeBtn.addEventListener("click", () => {
       pickHomeMode = false;
       setHomeBtn.classList.remove("active");
-      setHomeBtn.textContent = "Set Home";
+      setHomeBtn.textContent = "Set home point";
       homeLatLng = null;
+      clearHomeBtn.disabled = true;
+      homeStatus.textContent = 'Optional: choose where the aircraft starts.';
       if (homeMarker) {
         map.removeLayer(homeMarker);
         homeMarker = null;
       }
+      if (lastWaypoints.length) clearRoute();
     });
 
     map.on("click", (e) => {
@@ -365,7 +209,9 @@
       setHome(e.latlng);
       pickHomeMode = false;
       setHomeBtn.classList.remove("active");
-      setHomeBtn.textContent = "Set Home";
+      setHomeBtn.textContent = "Set home point";
+      clearHomeBtn.disabled = false;
+      homeStatus.textContent = 'Home point set. Drag its marker to move it.';
     });
 
     // Draw layers
@@ -385,11 +231,14 @@
     // Events
     map.on(L.Draw.Event.CREATED, e => {
       const layer = e.layer;
+      drawnItems.clearLayers();
       layer.feature = layer.feature || { type:'Feature', properties:{} };
       layer.feature.properties.type = guessType(layer);
       layer.feature.properties.alt_m = DEFAULT_ALT;
       drawnItems.addLayer(layer);
-      surveyLayer.clearLayers();
+      areaStatus.textContent = `${layer.getLatLngs()[0].length} corners selected`;
+      areaStatus.classList.add('ready');
+      clearRoute();
     });
 
     map.on(L.Draw.Event.EDITED, e => {
@@ -400,11 +249,13 @@
         if (typeof layer.feature.properties.alt_m !== 'number')
           layer.feature.properties.alt_m = DEFAULT_ALT;
       });
-      surveyLayer.clearLayers();
+      clearRoute();
     });
 
     map.on(L.Draw.Event.DELETED, () => {
-      surveyLayer.clearLayers();
+      areaStatus.textContent = 'No area drawn yet';
+      areaStatus.classList.remove('ready');
+      clearRoute();
     });
 
     function guessType(layer) {
@@ -427,7 +278,7 @@
 
     function exportCSV() {
       if (!lastWaypoints.length) {
-        alert("No waypoints received yet. Press the blue ▶ button.");
+        showStatus('Generate a route before downloading waypoints.', 'error');
         return;
       }
 
@@ -444,7 +295,7 @@
       download('survey_waypoints.csv', rows.join('\n'));
     }
 
-    document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
+    exportBtn.addEventListener('click', exportCSV);
 
     function getMainPolygonLatLngs() {
       let polygonLayer = null;
@@ -465,14 +316,19 @@
     async function sendPolygonToServer() {
       const polygon = getMainPolygonLatLngs();
       if (!polygon) {
-        alert("Draw a polygon first!");
+        showStatus('Draw a survey area with the polygon tool first.', 'error');
         return;
       }
 
       const altitude = Number(document.getElementById('altInput').value);
+      if (!Number.isFinite(altitude) || altitude < 1 || altitude > 500) {
+        showStatus('Enter an altitude between 1 and 500 metres.', 'error');
+        document.getElementById('altInput').focus();
+        return;
+      }
       const payload = {
         polygon,
-        altitude_m: Number.isFinite(altitude) && altitude > 0 && altitude <= 20 ? altitude : DEFAULT_ALT,
+        altitude_m: altitude,
         camera: {
           sensor_width_mm: readPositiveNumber('sensorWidthInput', DEFAULT_CAMERA.sensor_width_mm),
           sensor_height_mm: readPositiveNumber('sensorHeightInput', DEFAULT_CAMERA.sensor_height_mm),
@@ -489,32 +345,45 @@
         payload.home = { lat: homeLatLng.lat, lon: homeLatLng.lng };
       }
 
-      const res = await fetch("/api/survey", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json();
-      lastWaypoints = Array.isArray(data.waypoints) ? data.waypoints : [];
-
-      surveyLayer.clearLayers();
-
-      if (Array.isArray(data.waypoints) && data.waypoints.length > 0) {
+      generateBtn.disabled = true;
+      generateBtn.querySelector('span').textContent = '···';
+      showStatus('Calculating your survey route…');
+      try {
+        const res = await fetch("/api/survey", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not generate a route.');
+        if (!Array.isArray(data.waypoints) || !data.waypoints.length) throw new Error('No waypoints were generated. Try another area or flight setting.');
+        lastWaypoints = data.waypoints;
+        surveyLayer.clearLayers();
         const latlngs = [];
 
         data.waypoints.forEach((wp) => {
           const latlng = [wp.lat, wp.lon];
           latlngs.push(latlng);
 
-          L.circleMarker(latlng, { radius: 3 }).addTo(surveyLayer);
+          L.circleMarker(latlng, { radius: 3, color: '#146d5a', fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(surveyLayer);
         });
 
-        L.polyline(latlngs, { dashArray:"4 4" }).addTo(surveyLayer);
-        map.fitBounds(L.latLngBounds(latlngs));
+        L.polyline(latlngs, { color: '#155e50', weight: 3, opacity: .9 }).addTo(surveyLayer);
+        map.fitBounds(L.latLngBounds(latlngs), { padding: [28, 28] });
+        waypointCount.textContent = String(lastWaypoints.length);
+        routeResult.hidden = false;
+        exportBtn.disabled = false;
+        showStatus('Route ready. Review it on the map, then download the waypoints.', 'success');
+      } catch (error) {
+        lastWaypoints = [];
+        surveyLayer.clearLayers();
+        exportBtn.disabled = true;
+        routeResult.hidden = true;
+        showStatus(error.message || 'The route could not be generated. Please try again.', 'error');
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.querySelector('span').textContent = '→';
       }
-
-      alert("Received " + data.waypoints.length + " waypoints!");
     }
   </script>
 
