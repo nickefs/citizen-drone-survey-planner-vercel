@@ -143,7 +143,6 @@
 
     // Map
     const map = L.map('map', { maxZoom: 22, zoomControl: false }).setView([39.101418, 26.440039], 17);
-    const zoomControl = L.control.zoom({ zoomInTitle: ui.t('map.zoomIn'), zoomOutTitle: ui.t('map.zoomOut') }).addTo(map);
 
     // Basemap (Satellite only)
     const esriSat = L.tileLayer(
@@ -402,11 +401,6 @@
     document.addEventListener('survey:language', () => {
       updateGsdReadout();
       if (homeMarker) homeMarker.setPopupContent(ui.t('home.popup'));
-      for (const [selector, key] of [['.leaflet-control-zoom-in', 'map.zoomIn'], ['.leaflet-control-zoom-out', 'map.zoomOut']]) {
-        const button = document.querySelector(selector);
-        button?.setAttribute('title', ui.t(key));
-        button?.setAttribute('aria-label', ui.t(key));
-      }
     });
     ui.init();
   </script>

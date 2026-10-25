@@ -104,7 +104,7 @@ input { font-size: 16px !important; }
 .workspace.map-expanded .map-pane { width: 100%; height: 100%; min-height: 0; }
 body.map-expanded { overflow: hidden; }
 .map-route-summary { position: absolute; z-index: 600; right: 18px; bottom: 76px; display: flex; align-items: center; gap: 12px; padding: 7px 7px 7px 13px; background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.18); font-size: 12px; font-weight: 700; }
-.map-gsd { position: absolute; z-index: 600; right: 18px; bottom: 29px; display: flex; align-items: baseline; gap: 6px; padding: 6px 8px; background: rgba(255,255,255,.96); box-shadow: 0 4px 16px rgba(0,0,0,.18); color: #111113; pointer-events: none; white-space: nowrap; }
+.map-gsd { position: absolute; z-index: 600; left: 18px; top: 18px; display: flex; align-items: baseline; gap: 6px; padding: 6px 8px; background: rgba(255,255,255,.96); box-shadow: 0 4px 16px rgba(0,0,0,.18); color: #111113; pointer-events: none; white-space: nowrap; }
 .map-gsd > span { font-size: 9px; font-weight: 800; letter-spacing: .08em; }
 .map-gsd strong { font-size: 12px; }
 .map-gsd small { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
@@ -137,14 +137,17 @@ body.map-expanded { overflow: hidden; }
 .area-corner-marker { display: grid; place-items: center; border: 2px solid #111113; border-radius: 50%; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.4); cursor: grab; touch-action: none; }
 .area-corner-marker span { width: 8px; height: 8px; border-radius: 50%; background: #111113; pointer-events: none; }
 .area-corner-marker.leaflet-drag-target, .leaflet-dragging .area-corner-marker { cursor: grabbing; }
+@media (min-width: 761px) and (max-width: 1050px) {
+  .map-top { left: 18px; display: grid; grid-template-columns: 1fr auto; row-gap: 7px; max-width: none; justify-items: end; }
+  .map-hint { grid-column: 1 / -1; grid-row: 2; justify-self: start; }
+  #expandMapBtn { grid-column: 2; grid-row: 1; }
+}
 @media (max-width: 760px) {
   .map-top { top: 12px; right: 12px; left: 12px; display: grid; grid-template-columns: 1fr auto; row-gap: 7px; max-width: none; justify-items: end; }
   .map-hint { grid-column: 1 / -1; grid-row: 2; justify-self: start; max-width: 100%; padding: 7px 9px; font-size: 11px; }
   #expandMapBtn { grid-column: 2; grid-row: 1; padding: 8px 9px; font-size: 11px; }
-  .leaflet-top.leaflet-left { margin-top: 135px; }
   .map-route-summary { right: 12px; bottom: 92px; max-width: calc(100% - 24px); }
-  .map-gsd { right: 12px; bottom: 29px; }
-  .map-pane.is-drawing .map-gsd { bottom: 112px; }
+  .map-gsd { left: 12px; top: 18px; }
   .area-draw-controls { left: 12px; right: 12px; bottom: 12px; }
 }
 
