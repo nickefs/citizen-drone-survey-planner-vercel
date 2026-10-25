@@ -225,7 +225,7 @@
 
     const drawControl = new L.Control.Draw({
       position: 'topleft',
-      draw: { rectangle:false, circle:false, circlemarker:false, polyline:false, marker:false },
+      draw: { rectangle:false, circle:false, circlemarker:false, polyline:false, marker:false, polygon: { shapeOptions: { color: '#111113', weight: 2, fillColor: '#fff', fillOpacity: .08 } } },
       edit: { featureGroup: drawnItems, remove: true }
     });
     map.addControl(drawControl);
