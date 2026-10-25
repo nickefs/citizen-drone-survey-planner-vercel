@@ -11,6 +11,13 @@ button:focus-visible, input:focus-visible { outline: 3px solid #111113; outline-
 .brand strong { color: #111113; }
 .brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid #c3c3ca; border-radius: 9px; font-size: 24px; line-height: 1; }
 .sidebar-heading { margin: 32px 0 26px; }
+.preferences { display: grid; gap: 7px; margin-top: 18px; }
+.preference-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.preference-label { color: #585860; font-size: 11px; font-weight: 700; }
+.preference-options { display: flex; flex-wrap: nowrap; }
+.preference-options button { min-height: 31px; padding: 5px 8px; border: 1px solid #c3c3ca; background: #fff; color: #111113; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.preference-options button + button { border-left: 0; }
+.preference-options button[aria-pressed="true"] { background: #111113; color: #fff; }
 .eyebrow { color: #585860; font-size: 11px; font-weight: 750; letter-spacing: .16em; }
 h1 { margin: 9px 0 10px; font-size: clamp(29px, 3vw, 37px); line-height: 1.1; letter-spacing: -.04em; }
 .sidebar-heading p, .control-section p { margin: 0; color: #585860; font-size: 13px; line-height: 1.55; }
@@ -97,6 +104,10 @@ input { font-size: 16px !important; }
 .workspace.map-expanded .map-pane { width: 100%; height: 100%; min-height: 0; }
 body.map-expanded { overflow: hidden; }
 .map-route-summary { position: absolute; z-index: 600; right: 18px; bottom: 22px; display: flex; align-items: center; gap: 12px; padding: 7px 7px 7px 13px; background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.18); font-size: 12px; font-weight: 700; }
+.map-gsd { position: absolute; z-index: 600; right: 18px; bottom: 78px; display: grid; grid-template-columns: auto auto; align-items: baseline; gap: 1px 9px; min-width: 126px; padding: 8px 10px; background: rgba(255,255,255,.96); box-shadow: 0 4px 16px rgba(0,0,0,.18); color: #111113; pointer-events: none; }
+.map-gsd > span { font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+.map-gsd strong { font-size: 15px; white-space: nowrap; }
+.map-gsd small { grid-column: 1 / -1; color: #585860; font-size: 10px; }
 .map-route-summary[hidden], #cornerControls[hidden] { display: none !important; }
 
 .route-result { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 13px; }
@@ -130,6 +141,72 @@ body.map-expanded { overflow: hidden; }
   .map-top { top: 12px; right: 12px; left: 68px; max-width: none; justify-content: flex-end; }
   .map-hint { flex: 1; padding: 7px 9px; font-size: 11px; }
   #expandMapBtn { padding: 8px 9px; font-size: 11px; }
-  .map-route-summary { right: 12px; bottom: 76px; max-width: calc(100% - 24px); }
+  .map-route-summary { right: 12px; bottom: 118px; max-width: calc(100% - 24px); }
+  .map-gsd { top: 165px; right: 12px; bottom: auto; }
   .area-draw-controls { left: 12px; right: 12px; bottom: 12px; }
 }
+
+html[data-effective-theme="dark"] { color-scheme: dark; background: #121417; color: #f4f4f5; }
+html[data-effective-theme="dark"] .sidebar { background: #1b1e22; box-shadow: 8px 0 32px rgba(0,0,0,.28); }
+html[data-effective-theme="dark"] .map-pane { background: #121417; }
+html[data-effective-theme="dark"] .brand, html[data-effective-theme="dark"] .brand strong,
+html[data-effective-theme="dark"] .eyebrow, html[data-effective-theme="dark"] h1,
+html[data-effective-theme="dark"] h2, html[data-effective-theme="dark"] .field-label,
+html[data-effective-theme="dark"] .settingsTitle { color: #f4f4f5; }
+html[data-effective-theme="dark"] .sidebar-heading p,
+html[data-effective-theme="dark"] .control-section p,
+html[data-effective-theme="dark"] .preference-label,
+html[data-effective-theme="dark"] .field-label span,
+html[data-effective-theme="dark"] .route-result span,
+html[data-effective-theme="dark"] .selected-waypoint small,
+html[data-effective-theme="dark"] .waypoint-index,
+html[data-effective-theme="dark"] .waypoint-alt,
+html[data-effective-theme="dark"] .waypoint-pages,
+html[data-effective-theme="dark"] .map-gsd small { color: #b7bcc4; }
+html[data-effective-theme="dark"] .control-section,
+html[data-effective-theme="dark"] .waypoint-list,
+html[data-effective-theme="dark"] .waypoint-list li { border-color: #343943; }
+html[data-effective-theme="dark"] .brand-mark,
+html[data-effective-theme="dark"] .step-number,
+html[data-effective-theme="dark"] .inline-state,
+html[data-effective-theme="dark"] #settingsPanel,
+html[data-effective-theme="dark"] .route-result,
+html[data-effective-theme="dark"] .selected-waypoint { background: #25292f; border-color: #545b67; color: #f4f4f5 !important; }
+html[data-effective-theme="dark"] #altInput,
+html[data-effective-theme="dark"] .settingsGrid input,
+html[data-effective-theme="dark"] .setting-row button,
+html[data-effective-theme="dark"] .settings-toggle,
+html[data-effective-theme="dark"] .export-action,
+html[data-effective-theme="dark"] #closeSettingsBtn,
+html[data-effective-theme="dark"] .gsdReadout,
+html[data-effective-theme="dark"] .preference-options button,
+html[data-effective-theme="dark"] .map-hint,
+html[data-effective-theme="dark"] .map-button,
+html[data-effective-theme="dark"] .map-gsd,
+html[data-effective-theme="dark"] .map-route-summary,
+html[data-effective-theme="dark"] .map-route-summary button,
+html[data-effective-theme="dark"] .waypoint-pages button,
+html[data-effective-theme="dark"] .waypoint-list button,
+html[data-effective-theme="dark"] .leaflet-popup-content-wrapper,
+html[data-effective-theme="dark"] .leaflet-popup-tip { background: #1b1e22; border-color: #545b67; color: #f4f4f5; }
+html[data-effective-theme="dark"] .inline-state.ready,
+html[data-effective-theme="dark"] .route-status.success,
+html[data-effective-theme="dark"] .route-result strong { color: #f4f4f5 !important; }
+html[data-effective-theme="dark"] #floatingSurveyBtn,
+html[data-effective-theme="dark"] .map-button.map-primary,
+html[data-effective-theme="dark"] .preference-options button[aria-pressed="true"] { background: #f4f4f5; border-color: #f4f4f5; color: #111113; }
+html[data-effective-theme="dark"] #floatingSurveyBtn:hover:not(:disabled),
+html[data-effective-theme="dark"] .map-button.map-primary:hover { background: #d8dbe0; }
+html[data-effective-theme="dark"] .waypoint-list button:hover,
+html[data-effective-theme="dark"] .waypoint-list button[aria-current="true"],
+html[data-effective-theme="dark"] .setting-row button:hover:not(:disabled),
+html[data-effective-theme="dark"] .settings-toggle:hover,
+html[data-effective-theme="dark"] .export-action:hover:not(:disabled),
+html[data-effective-theme="dark"] .map-button:hover:not(.map-primary),
+html[data-effective-theme="dark"] .map-route-summary button:hover,
+html[data-effective-theme="dark"] .waypoint-pages button:hover:not(:disabled) { background: #30353c; }
+html[data-effective-theme="dark"] .waypoint-list button[aria-current="true"] { box-shadow: inset 3px 0 #f4f4f5; }
+html[data-effective-theme="dark"] .setting-row button.active { background: #30353c; }
+html[data-effective-theme="dark"] .leaflet-bar a,
+html[data-effective-theme="dark"] .leaflet-bar a:hover { background: #1b1e22 !important; color: #f4f4f5 !important; border-color: #545b67 !important; }
+html[data-effective-theme="dark"] .route-status.error { color: #ff9a9a !important; }

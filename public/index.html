@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>UAV Survey Planner | Plan and export waypoints</title>
@@ -15,6 +15,10 @@
   <main class="workspace">
     <aside class="sidebar" aria-label="Survey controls">
       <div class="brand"><span class="brand-mark" aria-hidden="true">◎</span><span>SURVEY <strong>PLANNER</strong></span></div>
+      <div class="preferences" aria-label="Display preferences">
+        <div class="preference-row"><span class="preference-label language">Language</span><div class="preference-options" role="group" aria-label="Language"><button type="button" data-language-choice="en" aria-pressed="true">EN</button><button type="button" data-language-choice="el" aria-pressed="false">ΕΛ</button></div></div>
+        <div class="preference-row"><span class="preference-label appearance">Appearance</span><div class="preference-options" role="group" aria-label="Appearance"><button type="button" data-theme-choice="system" aria-pressed="true">Auto</button><button type="button" data-theme-choice="light" aria-pressed="false">Light</button><button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button></div></div>
+      </div>
       <div class="sidebar-heading"><span class="eyebrow">FLIGHT PLANNING</span><h1>Plan your survey</h1><p>Draw an area, choose your flight settings, and review the route before exporting it.</p></div>
 
       <section class="control-section" aria-labelledby="area-title"><div class="section-heading"><span class="step-number">01</span><h2 id="area-title">Survey area</h2></div><p id="areaInstructions">Choose Draw area, then click the map to place corners. Drag a corner to adjust it.</p><p id="areaStatus" class="inline-state">No area drawn yet</p></section>
@@ -26,11 +30,12 @@
       <section class="control-section action-section" aria-labelledby="route-title"><div class="section-heading"><span class="step-number">03</span><h2 id="route-title">Generate route</h2></div><button id="floatingSurveyBtn" class="primary-action" type="button" onclick="sendPolygonToServer()">Generate survey route <span aria-hidden="true">→</span></button><p id="routeStatus" class="route-status" role="status" aria-live="polite">Draw an area to get started.</p><div id="routeResult" class="route-result" hidden><div><span>Waypoints</span><strong id="waypointCount">0</strong></div><div><span>Route length</span><strong id="routeDistance">0 m</strong></div></div><button id="exportCsvBtn" class="export-action" type="button" disabled>Download waypoint CSV <span aria-hidden="true">↓</span></button><p class="safety-note">Review the route against terrain, airspace, and aircraft limits before flying.</p></section>
       <section id="waypointPanel" class="control-section waypoint-panel" aria-labelledby="waypoints-title" hidden><div class="section-heading"><span class="step-number">04</span><h2 id="waypoints-title">Waypoints</h2></div><p>Select a waypoint to locate it on the map. The CSV contains the full route.</p><div id="selectedWaypoint" class="selected-waypoint" role="status" aria-live="polite"></div><ol id="waypointList" class="waypoint-list"></ol><div class="waypoint-pages"><button id="waypointPrev" type="button" aria-label="Previous waypoints">Previous</button><span id="waypointRange"></span><button id="waypointNext" type="button" aria-label="Next waypoints">Next</button></div></section>
     </aside>
-    <section class="map-pane" aria-label="Interactive survey map"><div id="map"></div><div class="map-top"><p id="mapHint" class="map-hint">Choose Draw area to outline a survey area.</p><button id="expandMapBtn" class="map-button" type="button" aria-pressed="false">Full map <span aria-hidden="true">⤢</span></button></div><div id="areaDrawControls" class="area-draw-controls"><button id="startAreaBtn" class="map-button map-primary" type="button">Draw area</button><div id="cornerControls" hidden><button id="undoCornerBtn" class="map-button" type="button">Undo</button><button id="finishAreaBtn" class="map-button map-primary" type="button">Finish area</button><button id="cancelAreaBtn" class="map-button" type="button">Cancel</button></div></div><div id="mapRouteSummary" class="map-route-summary" hidden><span id="mapRouteSummaryText"></span><button id="showWaypointsBtn" type="button">View waypoints</button></div></section>
+    <section class="map-pane" aria-label="Interactive survey map"><div id="map"></div><div class="map-top"><p id="mapHint" class="map-hint">Choose Draw area to outline a survey area.</p><button id="expandMapBtn" class="map-button" type="button" aria-pressed="false"><span id="expandMapLabel">Full map</span> <span id="expandMapIcon" aria-hidden="true">⤢</span></button></div><div id="areaDrawControls" class="area-draw-controls"><button id="startAreaBtn" class="map-button map-primary" type="button">Draw area</button><div id="cornerControls" hidden><button id="undoCornerBtn" class="map-button" type="button">Undo</button><button id="finishAreaBtn" class="map-button map-primary" type="button">Finish area</button><button id="cancelAreaBtn" class="map-button" type="button">Cancel</button></div></div><div id="mapGsd" class="map-gsd" aria-live="polite"><span>GSD</span><strong id="mapGsdValue">-- cm/px</strong><small id="mapGsdAltitude">at 10 m altitude</small></div><div id="mapRouteSummary" class="map-route-summary" hidden><span id="mapRouteSummaryText"></span><button id="showWaypointsBtn" type="button">View waypoints</button></div></section>
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script src="/preferences.js"></script>
 
   <script>
     const DEFAULT_ALT = 10;
@@ -83,8 +88,15 @@
 
     function updateGsdReadout() {
       const gsdValue = document.getElementById('gsdValue');
-      const gsd = computeGsdCmPerPixel();
-      gsdValue.textContent = Number.isFinite(gsd) ? `${gsd.toFixed(2)} cm/px` : '-- cm/px';
+      const altitudeText = document.getElementById('altInput').value;
+      const altitude = altitudeText.trim() === '' ? NaN : Number(altitudeText);
+      const gsd = altitude >= 1 && altitude <= 500 ? computeGsdCmPerPixel() : NaN;
+      const value = Number.isFinite(gsd)
+        ? `${new Intl.NumberFormat(ui.language === 'el' ? 'el-GR' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(gsd)} cm/px`
+        : '-- cm/px';
+      gsdValue.textContent = value;
+      document.getElementById('mapGsdValue').textContent = value;
+      ui.message(document.getElementById('mapGsdAltitude'), 'gsd.altitude', { altitude: Number.isFinite(altitude) && altitude >= 1 && altitude <= 500 ? altitude : '—' });
     }
 
     function bindGsdUpdates(id) {
@@ -130,7 +142,8 @@
     });
 
     // Map
-    const map = L.map('map', { maxZoom: 22 }).setView([39.101418, 26.440039], 17);
+    const map = L.map('map', { maxZoom: 22, zoomControl: false }).setView([39.101418, 26.440039], 17);
+    const zoomControl = L.control.zoom({ zoomInTitle: ui.t('map.zoomIn'), zoomOutTitle: ui.t('map.zoomOut') }).addTo(map);
 
     // Basemap (Satellite only)
     const esriSat = L.tileLayer(
@@ -147,7 +160,7 @@
       homeLatLng = latlng;
       if (homeMarker) map.removeLayer(homeMarker);
       homeMarker = L.marker(latlng, { draggable: true }).addTo(map);
-      homeMarker.bindPopup("Home").openPopup();
+      homeMarker.bindPopup(ui.t('home.popup')).openPopup();
       homeMarker.on("dragend", () => {
         homeLatLng = homeMarker.getLatLng();
         if (lastWaypoints.length) clearRoute();
@@ -165,10 +178,14 @@
     const routeResult = document.getElementById('routeResult');
     const waypointCount = document.getElementById('waypointCount');
 
-    function showStatus(message, kind = '') {
-      routeStatus.textContent = message;
+    function showStatus(key, kind = '') {
+      ui.message(routeStatus, key);
       routeStatus.className = `route-status ${kind}`;
     }
+    ui.message(routeStatus, 'route.start');
+    ui.message(areaStatus, 'area.none');
+    ui.message(homeStatus, 'home.optional');
+    ui.message(setHomeBtn, 'home.set');
 
     function clearRoute() {
       surveyLayer.clearLayers();
@@ -177,7 +194,7 @@
       routeResult.hidden = true;
       waypointCount.textContent = '0';
       document.dispatchEvent(new Event('survey:clear'));
-      showStatus('Area changed. Generate a new route to continue.');
+      showStatus('route.changed');
     }
     for (const id of ['altInput', 'sensorWidthInput', 'sensorHeightInput', 'focalLengthInput', 'imageWidthInput', 'imageHeightInput', 'frontOverlapInput', 'sideOverlapInput', 'turnaroundInput']) {
       document.getElementById(id).addEventListener('input', () => {
@@ -188,17 +205,17 @@
     setHomeBtn.addEventListener("click", () => {
       pickHomeMode = !pickHomeMode;
       setHomeBtn.classList.toggle("active", pickHomeMode);
-      setHomeBtn.textContent = pickHomeMode ? "Click the map" : "Set home point";
-      homeStatus.textContent = pickHomeMode ? 'Click a point on the map to set home.' : (homeLatLng ? 'Home point set. Drag its marker to move it.' : 'Optional: choose where the aircraft starts.');
+      ui.message(setHomeBtn, pickHomeMode ? 'home.pick' : 'home.set');
+      ui.message(homeStatus, pickHomeMode ? 'home.pickHint' : (homeLatLng ? 'home.ready' : 'home.optional'));
     });
 
     clearHomeBtn.addEventListener("click", () => {
       pickHomeMode = false;
       setHomeBtn.classList.remove("active");
-      setHomeBtn.textContent = "Set home point";
+      ui.message(setHomeBtn, 'home.set');
       homeLatLng = null;
       clearHomeBtn.disabled = true;
-      homeStatus.textContent = 'Optional: choose where the aircraft starts.';
+      ui.message(homeStatus, 'home.optional');
       if (homeMarker) {
         map.removeLayer(homeMarker);
         homeMarker = null;
@@ -211,9 +228,9 @@
       setHome(e.latlng);
       pickHomeMode = false;
       setHomeBtn.classList.remove("active");
-      setHomeBtn.textContent = "Set home point";
+      ui.message(setHomeBtn, 'home.set');
       clearHomeBtn.disabled = false;
-      homeStatus.textContent = 'Home point set. Drag its marker to move it.';
+      ui.message(homeStatus, 'home.ready');
     });
 
     // Draw layers
@@ -232,7 +249,7 @@
       layer.feature.properties.type = guessType(layer);
       layer.feature.properties.alt_m = DEFAULT_ALT;
       drawnItems.addLayer(layer);
-      areaStatus.textContent = `${layer.getLatLngs()[0].length} corners selected`;
+      ui.message(areaStatus, 'area.selected', { count: layer.getLatLngs()[0].length });
       areaStatus.classList.add('ready');
       clearRoute();
     });
@@ -250,7 +267,7 @@
     });
 
     map.on(L.Draw.Event.DELETED, () => {
-      areaStatus.textContent = 'No area drawn yet';
+      ui.message(areaStatus, 'area.none');
       areaStatus.classList.remove('ready');
       clearRoute();
     });
@@ -275,7 +292,7 @@
 
     function exportCSV() {
       if (!lastWaypoints.length) {
-        showStatus('Generate a route before downloading waypoints.', 'error');
+        showStatus('route.noExport', 'error');
         return;
       }
 
@@ -313,13 +330,13 @@
     async function sendPolygonToServer() {
       const polygon = getMainPolygonLatLngs();
       if (!polygon) {
-        showStatus('Draw a survey area with the polygon tool first.', 'error');
+        showStatus('route.noArea', 'error');
         return;
       }
 
       const altitude = Number(document.getElementById('altInput').value);
       if (!Number.isFinite(altitude) || altitude < 1 || altitude > 500) {
-        showStatus('Enter an altitude between 1 and 500 metres.', 'error');
+        showStatus('route.altitude', 'error');
         document.getElementById('altInput').focus();
         return;
       }
@@ -344,7 +361,7 @@
 
       generateBtn.disabled = true;
       generateBtn.querySelector('span').textContent = '···';
-      showStatus('Calculating your survey route…');
+      showStatus('route.calculating');
       try {
         const res = await fetch("/api/survey", {
           method: "POST",
@@ -352,8 +369,11 @@
           body: JSON.stringify(payload)
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Could not generate a route.');
-        if (!Array.isArray(data.waypoints) || !data.waypoints.length) throw new Error('No waypoints were generated. Try another area or flight setting.');
+        if (!res.ok) {
+          const knownErrors = { 'Invalid request': 'error.invalidRequest', 'Polygon must have 3 to 200 vertices': 'error.polygonCount', 'Invalid polygon coordinates': 'error.polygonCoordinates' };
+          throw new Error(knownErrors[data.error] || 'route.failed');
+        }
+        if (!Array.isArray(data.waypoints) || !data.waypoints.length) throw new Error('route.empty');
         lastWaypoints = data.waypoints;
         surveyLayer.clearLayers();
         const latlngs = data.waypoints.map(wp => [wp.lat, wp.lon]);
@@ -362,14 +382,14 @@
         waypointCount.textContent = String(lastWaypoints.length);
         routeResult.hidden = false;
         exportBtn.disabled = false;
-        showStatus('Route ready. Review it on the map, then download the waypoints.', 'success');
+        showStatus('route.ready', 'success');
       } catch (error) {
         lastWaypoints = [];
         surveyLayer.clearLayers();
         document.dispatchEvent(new Event('survey:clear'));
         exportBtn.disabled = true;
         routeResult.hidden = true;
-        showStatus(error.message || 'The route could not be generated. Please try again.', 'error');
+        showStatus(ui.t(error.message) === error.message ? 'route.failed' : error.message, 'error');
       } finally {
         generateBtn.disabled = false;
         generateBtn.querySelector('span').textContent = '→';
@@ -378,6 +398,18 @@
   </script>
   <script src="/gesture.js"></script>
   <script src="/interface.js"></script>
+  <script>
+    document.addEventListener('survey:language', () => {
+      updateGsdReadout();
+      if (homeMarker) homeMarker.setPopupContent(ui.t('home.popup'));
+      for (const [selector, key] of [['.leaflet-control-zoom-in', 'map.zoomIn'], ['.leaflet-control-zoom-out', 'map.zoomOut']]) {
+        const button = document.querySelector(selector);
+        button?.setAttribute('title', ui.t(key));
+        button?.setAttribute('aria-label', ui.t(key));
+      }
+    });
+    ui.init();
+  </script>
 
 </body>
 </html>

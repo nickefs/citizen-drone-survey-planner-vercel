@@ -1,6 +1,8 @@
 (() => {
   const workspace = document.querySelector('.workspace');
   const expandButton = document.getElementById('expandMapBtn');
+  const expandLabel = document.getElementById('expandMapLabel');
+  const expandIcon = document.getElementById('expandMapIcon');
   const mapHint = document.getElementById('mapHint');
   const startAreaButton = document.getElementById('startAreaBtn');
   const cornerControls = document.getElementById('cornerControls');
@@ -46,7 +48,7 @@
       if (Array.isArray(plan.home) && plan.home.length === 2 && Number.isFinite(plan.home[0]) && Number.isFinite(plan.home[1]) && Math.abs(plan.home[0]) <= 90 && Math.abs(plan.home[1]) <= 180) {
         setHome(L.latLng(plan.home[0], plan.home[1]));
         clearHomeBtn.disabled = false;
-        homeStatus.textContent = 'Home point set. Drag its marker to move it.';
+        ui.message(homeStatus, 'home.ready');
       }
       if (Array.isArray(plan.center) && plan.center.length === 2 && Number.isFinite(plan.center[0]) && Number.isFinite(plan.center[1]) && Number.isFinite(plan.zoom)) map.setView(plan.center, plan.zoom);
       if (plan.routeReady && drawnItems.getLayers().length) setTimeout(() => sendPolygonToServer(), 200);
@@ -59,7 +61,8 @@
     workspace.classList.toggle('map-expanded', expanded);
     document.body.classList.toggle('map-expanded', expanded);
     expandButton.setAttribute('aria-pressed', String(expanded));
-    expandButton.innerHTML = expanded ? 'Close full map <span aria-hidden="true">×</span>' : 'Full map <span aria-hidden="true">⤢</span>';
+    ui.message(expandLabel, expanded ? 'map.close' : 'map.full');
+    expandIcon.textContent = expanded ? '×' : '⤢';
     requestAnimationFrame(() => map.invalidateSize());
     setTimeout(() => {
       map.invalidateSize();
@@ -67,7 +70,8 @@
       else if (expanded && drawnItems.getLayers().length) map.fitBounds(drawnItems.getBounds(), { padding: [32, 32] });
     }, 150);
   }
-  if (embedded) expandButton.innerHTML = 'Open full map <span aria-hidden="true">↗</span>';
+  ui.message(expandLabel, embedded ? 'map.open' : 'map.full');
+  if (embedded) expandIcon.textContent = '↗';
   expandButton.addEventListener('click', () => {
     if (embedded) {
       const plan = encodeURIComponent(JSON.stringify(planForNewTab()));
@@ -95,9 +99,10 @@
     const marker = L.marker(corner, {
       draggable: true,
       keyboard: false,
-      title: `Drag corner ${index + 1}`,
+      title: ui.t('map.dragCorner', { number: index + 1 }),
       icon: L.divIcon({ className: 'area-corner-marker', html: '<span></span>', iconSize: [28, 28], iconAnchor: [14, 14] })
     });
+    marker.cornerIndex = index;
     marker.on('drag', () => onMove(marker.getLatLng(), index));
     return marker;
   }
@@ -122,9 +127,9 @@
     finishButton.disabled = corners.length < 3;
     if (drawing) {
       const count = corners.length;
-      const action = mobile ? 'Tap' : 'Click';
-      mapHint.textContent = count ? `${count} ${count === 1 ? 'corner' : 'corners'} placed. ${action} the map to add another, or drag a corner to move it.` : `${action} the map to place a corner. Drag to move the map.`;
-      areaStatus.textContent = `${count} ${count === 1 ? 'corner' : 'corners'} placed`;
+      const cornersLabel = ui.t(count === 1 ? 'area.cornerOne' : 'area.cornerMany');
+      ui.message(mapHint, count ? (mobile ? 'map.drawingTouch' : 'map.drawingMouse') : (mobile ? 'map.placeTouch' : 'map.placeMouse'), { count, corners: cornersLabel });
+      ui.message(areaStatus, 'area.placed', { count, corners: cornersLabel });
       areaStatus.classList.toggle('ready', count >= 3);
     }
   }
@@ -138,7 +143,7 @@
     startAreaButton.hidden = false;
     cornerControls.hidden = true;
     map.getContainer().classList.remove('is-drawing');
-    mapHint.textContent = 'Drag a corner to adjust the area, then generate a route.';
+    ui.message(mapHint, 'map.areaReady');
   }
   function updateAreaHandles(layer) {
     areaHandles.clearLayers();
@@ -152,20 +157,20 @@
       }).addTo(areaHandles);
       handle.on('dragstart', () => { if (lastWaypoints.length) clearRoute(); });
       handle.on('dragend', () => {
-        areaStatus.textContent = `${layer.getLatLngs()[0].length} corners selected`;
+        ui.message(areaStatus, 'area.selected', { count: layer.getLatLngs()[0].length });
       });
     });
   }
   map.on(L.Draw.Event.CREATED, event => updateAreaHandles(event.layer));
   map.on(L.Draw.Event.DELETED, () => areaHandles.clearLayers());
-  document.getElementById('areaInstructions').textContent = `${mobile ? 'Tap' : 'Click'} Draw area, then ${mobile ? 'tap' : 'click'} the map to place corners. Drag any corner to adjust it.`;
-  mapHint.textContent = `${mobile ? 'Tap' : 'Click'} Draw area to start. Drag the map to look around.`;
+  ui.message(document.getElementById('areaInstructions'), mobile ? 'map.instructionsTouch' : 'map.instructionsMouse');
+  ui.message(mapHint, mobile ? 'map.startTouch' : 'map.startMouse');
   startAreaButton.addEventListener('click', () => {
     drawing = true;
     map.doubleClickZoom.disable();
     pickHomeMode = false;
     setHomeBtn.classList.remove('active');
-    setHomeBtn.textContent = 'Set home point';
+    ui.message(setHomeBtn, 'home.set');
     corners = [];
     drawnItems.clearLayers();
     areaHandles.clearLayers();
@@ -186,7 +191,7 @@
   });
   cancelButton.addEventListener('click', () => {
     stopDrawing();
-    areaStatus.textContent = 'No area drawn yet';
+    ui.message(areaStatus, 'area.none');
     areaStatus.classList.remove('ready');
   });
   const container = map.getContainer();
@@ -217,7 +222,9 @@
   let pageIndex = 0;
   const PAGE_SIZE = 20;
   function waypointType(type) {
-    return String(type || 'Waypoint').replace(/([a-z])([A-Z])/g, '$1 $2');
+    const value = String(type || 'Waypoint');
+    const key = `type.${value}`;
+    return ui.t(key) === key ? value.replace(/([a-z])([A-Z])/g, '$1 $2') : ui.t(key);
   }
   function routeDistance(waypoints) {
     let metres = 0;
@@ -236,7 +243,7 @@
       const button = document.createElement('button');
       button.type = 'button';
       button.setAttribute('aria-current', String(index === selectedIndex));
-      button.setAttribute('aria-label', `Waypoint ${index + 1}: ${waypointType(waypoint.type)}`);
+      button.setAttribute('aria-label', ui.t('waypoints.label', { number: index + 1, type: waypointType(waypoint.type) }));
       const number = document.createElement('span');
       number.className = 'waypoint-index';
       number.textContent = String(index + 1).padStart(2, '0');
@@ -251,7 +258,7 @@
       item.append(button);
       waypointList.append(item);
     }
-    waypointRange.textContent = `${start + 1}–${end} of ${points.length}`;
+    waypointRange.textContent = ui.t('waypoints.range', { start: start + 1, end, total: points.length });
     prevButton.disabled = pageIndex === 0;
     nextButton.disabled = end >= points.length;
   }
@@ -262,7 +269,7 @@
     const title = document.createElement('strong');
     title.textContent = `#${index + 1} ${waypointType(point.type)}`;
     const altitude = document.createElement('span');
-    altitude.textContent = `${point.alt_m} m altitude`;
+    altitude.textContent = ui.t('waypoints.altitude', { altitude: point.alt_m });
     const coordinates = document.createElement('small');
     coordinates.textContent = `${Number(point.lat).toFixed(6)}, ${Number(point.lon).toFixed(6)}`;
     selectedWaypoint.append(title, altitude, coordinates);
@@ -297,7 +304,7 @@
     waypointList.replaceChildren();
     selectedWaypoint.replaceChildren();
     document.getElementById('routeDistance').textContent = '0 m';
-    mapHint.textContent = drawnItems.getLayers().length ? 'Drag a corner to adjust the area, then generate a route.' : `${mobile ? 'Tap' : 'Click'} Draw area to start. Drag the map to look around.`;
+    ui.message(mapHint, drawnItems.getLayers().length ? 'map.areaReady' : (mobile ? 'map.startTouch' : 'map.startMouse'));
   });
   function isKeyWaypoint(point, index) {
     return index === 0 || index === points.length - 1 || point.type === 'Turnaround' || point.type === 'SurveyEntry';
@@ -321,10 +328,22 @@
     });
     const distance = routeDistance(points);
     document.getElementById('routeDistance').textContent = distance;
-    mapSummaryText.textContent = `${points.length} waypoints · ${distance}`;
+    mapSummaryText.textContent = ui.t('waypoints.summary', { count: points.length, distance });
     mapSummary.hidden = false;
     waypointPanel.hidden = false;
-    mapHint.textContent = 'Route ready. Select a waypoint to inspect it.';
+    ui.message(mapHint, 'map.routeReady');
     selectWaypoint(0);
+  });
+  document.addEventListener('survey:language', () => {
+    if (drawing) updateDraft();
+    [draftHandles, areaHandles].forEach(group => group.eachLayer(marker => {
+      const title = ui.t('map.dragCorner', { number: marker.cornerIndex + 1 });
+      marker.options.title = title;
+      marker.getElement()?.setAttribute('title', title);
+    }));
+    if (!points.length) return;
+    markers.forEach((marker, index) => marker.setPopupContent(`#${index + 1} ${waypointType(points[index].type)} · ${points[index].alt_m} m`));
+    mapSummaryText.textContent = ui.t('waypoints.summary', { count: points.length, distance: routeDistance(points) });
+    selectWaypoint(selectedIndex);
   });
 })();
