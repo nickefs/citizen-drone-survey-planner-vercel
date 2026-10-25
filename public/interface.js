@@ -1,5 +1,6 @@
 (() => {
   const workspace = document.querySelector('.workspace');
+  const mapPane = document.querySelector('.map-pane');
   const expandButton = document.getElementById('expandMapBtn');
   const expandLabel = document.getElementById('expandMapLabel');
   const expandIcon = document.getElementById('expandMapIcon');
@@ -143,6 +144,7 @@
     startAreaButton.hidden = false;
     cornerControls.hidden = true;
     map.getContainer().classList.remove('is-drawing');
+    mapPane.classList.remove('is-drawing');
     ui.message(mapHint, 'map.areaReady');
   }
   function updateAreaHandles(layer) {
@@ -178,6 +180,7 @@
     startAreaButton.hidden = true;
     cornerControls.hidden = false;
     map.getContainer().classList.add('is-drawing');
+    mapPane.classList.add('is-drawing');
     updateDraft();
   });
   undoButton.addEventListener('click', () => { corners.pop(); updateDraft(); });
