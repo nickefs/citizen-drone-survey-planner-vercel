@@ -92,8 +92,13 @@
   const draftLayers = L.layerGroup().addTo(map);
   function updateDraft() {
     draftLayers.clearLayers();
-    if (corners.length > 1) L.polyline(corners, { color: '#fff', weight: 5 }).addTo(draftLayers);
-    if (corners.length > 1) L.polyline(corners, { color: '#111113', weight: 2.5 }).addTo(draftLayers);
+    if (corners.length >= 3) {
+      L.polygon(corners, { color: '#fff', weight: 5, fillOpacity: 0, interactive: false }).addTo(draftLayers);
+      L.polygon(corners, { color: '#111113', weight: 2.5, fillColor: '#fff', fillOpacity: .12, interactive: false }).addTo(draftLayers);
+    } else if (corners.length === 2) {
+      L.polyline(corners, { color: '#fff', weight: 5, interactive: false }).addTo(draftLayers);
+      L.polyline(corners, { color: '#111113', weight: 2.5, interactive: false }).addTo(draftLayers);
+    }
     for (const corner of corners) L.circleMarker(corner, { radius: 5, color: '#fff', weight: 2, fillColor: '#111113', fillOpacity: 1 }).addTo(draftLayers);
     undoButton.disabled = corners.length === 0;
     finishButton.disabled = corners.length < 3;
@@ -163,6 +168,20 @@
       updateDraft();
     }, { passive: true });
     container.addEventListener('pointercancel', () => { pointerStart = null; }, { passive: true });
+  } else {
+    // Leaflet Draw previews an open line. Keep a separate, non-interactive
+    // closed preview so each new desktop corner shows the proposed area.
+    const desktopPreview = L.layerGroup().addTo(map);
+    map.on(L.Draw.Event.DRAWVERTEX, event => {
+      desktopPreview.clearLayers();
+      const vertices = [];
+      event.layers.eachLayer(marker => vertices.push(marker.getLatLng()));
+      if (vertices.length >= 3) {
+        L.polygon(vertices, { color: '#111113', weight: 2, fillColor: '#fff', fillOpacity: .12, interactive: false }).addTo(desktopPreview);
+      }
+    });
+    map.on(L.Draw.Event.DRAWSTOP, () => desktopPreview.clearLayers());
+    map.on(L.Draw.Event.CREATED, () => desktopPreview.clearLayers());
   }
 
   let points = [];
