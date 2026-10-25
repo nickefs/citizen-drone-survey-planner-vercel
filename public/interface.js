@@ -2,7 +2,6 @@
   const workspace = document.querySelector('.workspace');
   const expandButton = document.getElementById('expandMapBtn');
   const mapHint = document.getElementById('mapHint');
-  const mobileControls = document.getElementById('mobileDrawControls');
   const startAreaButton = document.getElementById('startAreaBtn');
   const cornerControls = document.getElementById('cornerControls');
   const undoButton = document.getElementById('undoCornerBtn');
@@ -79,32 +78,52 @@
   });
   const params = new URLSearchParams(location.search);
   if (params.get('map') === 'full' && !embedded) setFullMap(true);
-  if (!embedded) restorePlan(params.get('plan'));
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && workspace.classList.contains('map-expanded')) setFullMap(false);
   });
 
-  // Leaflet Draw creates touch vertices during some pans. On touch screens we
-  // accept only a short stationary tap while the user has chosen Draw area.
+  // Use the same drawing controls on mouse and touch. A point is added only
+  // after a short stationary press, so panning never creates corners.
   let drawing = false;
   let corners = [];
   let pointerStart = null;
   const draftLayers = L.layerGroup().addTo(map);
-  function updateDraft() {
-    draftLayers.clearLayers();
+  const draftShapes = L.layerGroup().addTo(draftLayers);
+  const draftHandles = L.layerGroup().addTo(draftLayers);
+  const areaHandles = L.layerGroup().addTo(map);
+  function cornerHandle(corner, index, onMove) {
+    const marker = L.marker(corner, {
+      draggable: true,
+      keyboard: false,
+      title: `Drag corner ${index + 1}`,
+      icon: L.divIcon({ className: 'area-corner-marker', html: '<span></span>', iconSize: [28, 28], iconAnchor: [14, 14] })
+    });
+    marker.on('drag', () => onMove(marker.getLatLng(), index));
+    return marker;
+  }
+  function renderDraftShape() {
+    draftShapes.clearLayers();
     if (corners.length >= 3) {
-      L.polygon(corners, { color: '#fff', weight: 5, fillOpacity: 0, interactive: false }).addTo(draftLayers);
-      L.polygon(corners, { color: '#111113', weight: 2.5, fillColor: '#fff', fillOpacity: .12, interactive: false }).addTo(draftLayers);
+      L.polygon(corners, { color: '#fff', weight: 5, fillOpacity: 0, interactive: false }).addTo(draftShapes);
+      L.polygon(corners, { color: '#111113', weight: 2.5, fillColor: '#fff', fillOpacity: .12, interactive: false }).addTo(draftShapes);
     } else if (corners.length === 2) {
-      L.polyline(corners, { color: '#fff', weight: 5, interactive: false }).addTo(draftLayers);
-      L.polyline(corners, { color: '#111113', weight: 2.5, interactive: false }).addTo(draftLayers);
+      L.polyline(corners, { color: '#fff', weight: 5, interactive: false }).addTo(draftShapes);
+      L.polyline(corners, { color: '#111113', weight: 2.5, interactive: false }).addTo(draftShapes);
     }
-    for (const corner of corners) L.circleMarker(corner, { radius: 5, color: '#fff', weight: 2, fillColor: '#111113', fillOpacity: 1 }).addTo(draftLayers);
+  }
+  function updateDraft() {
+    renderDraftShape();
+    draftHandles.clearLayers();
+    corners.forEach((corner, index) => cornerHandle(corner, index, (latlng, movedIndex) => {
+      corners[movedIndex] = latlng;
+      renderDraftShape();
+    }).addTo(draftHandles));
     undoButton.disabled = corners.length === 0;
     finishButton.disabled = corners.length < 3;
     if (drawing) {
       const count = corners.length;
-      mapHint.textContent = count ? `${count} ${count === 1 ? 'corner' : 'corners'} placed. Tap the map to add another, or drag to move it.` : 'Tap the map to place a corner. Drag to move the map.';
+      const action = mobile ? 'Tap' : 'Click';
+      mapHint.textContent = count ? `${count} ${count === 1 ? 'corner' : 'corners'} placed. ${action} the map to add another, or drag a corner to move it.` : `${action} the map to place a corner. Drag to move the map.`;
       areaStatus.textContent = `${count} ${count === 1 ? 'corner' : 'corners'} placed`;
       areaStatus.classList.toggle('ready', count >= 3);
     }
@@ -113,76 +132,83 @@
     drawing = false;
     pointerStart = null;
     corners = [];
-    draftLayers.clearLayers();
+    draftShapes.clearLayers();
+    draftHandles.clearLayers();
+    map.doubleClickZoom.enable();
     startAreaButton.hidden = false;
     cornerControls.hidden = true;
     map.getContainer().classList.remove('is-drawing');
-    mapHint.textContent = 'Draw a survey area, then review the route.';
+    mapHint.textContent = 'Drag a corner to adjust the area, then generate a route.';
   }
-  if (mobile) {
-    mobileControls.hidden = false;
-    document.getElementById('areaInstructions').textContent = 'Tap Draw area, then tap the map to place corners. Dragging the map will not add a corner.';
-    mapHint.textContent = 'Tap Draw area to start. Drag the map to look around.';
-    startAreaButton.addEventListener('click', () => {
-      drawing = true;
-      pickHomeMode = false;
-      setHomeBtn.classList.remove('active');
-      setHomeBtn.textContent = 'Set home point';
-      corners = [];
-      drawnItems.clearLayers();
-      clearRoute();
-      startAreaButton.hidden = true;
-      cornerControls.hidden = false;
-      map.getContainer().classList.add('is-drawing');
-      updateDraft();
+  function updateAreaHandles(layer) {
+    areaHandles.clearLayers();
+    if (!layer) return;
+    const vertices = layer.getLatLngs()[0];
+    vertices.forEach((corner, index) => {
+      const handle = cornerHandle(corner, index, (latlng, movedIndex) => {
+        const updated = layer.getLatLngs()[0].slice();
+        updated[movedIndex] = latlng;
+        layer.setLatLngs(updated);
+      }).addTo(areaHandles);
+      handle.on('dragstart', () => { if (lastWaypoints.length) clearRoute(); });
+      handle.on('dragend', () => {
+        areaStatus.textContent = `${layer.getLatLngs()[0].length} corners selected`;
+      });
     });
-    undoButton.addEventListener('click', () => { corners.pop(); updateDraft(); });
-    finishButton.addEventListener('click', () => {
-      if (corners.length < 3) return;
-      const polygon = L.polygon(corners, { color: '#111113', weight: 3, fillColor: '#fff', fillOpacity: .18 });
-      stopDrawing();
-      map.fire(L.Draw.Event.CREATED, { layer: polygon });
-      map.fitBounds(polygon.getBounds(), { padding: [24, 24] });
-    });
-    cancelButton.addEventListener('click', () => {
-      stopDrawing();
-      areaStatus.textContent = 'No area drawn yet';
-      areaStatus.classList.remove('ready');
-    });
-    const container = map.getContainer();
-    container.addEventListener('pointerdown', event => {
-      if (!drawing || event.pointerType === 'mouse' || event.target.closest('.leaflet-control')) return;
-      pointerStart = { id: event.pointerId, x: event.clientX, y: event.clientY, time: performance.now(), scrollY: window.scrollY, moved: false };
-    }, { passive: true });
-    container.addEventListener('pointermove', event => {
-      if (pointerStart && event.pointerId === pointerStart.id && Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 8) pointerStart.moved = true;
-    }, { passive: true });
-    container.addEventListener('pointerup', event => {
-      if (!drawing || !pointerStart || event.pointerId !== pointerStart.id) return;
-      const tapped = window.isStationaryTap(pointerStart, event, performance.now() - pointerStart.time, window.scrollY);
-      pointerStart = null;
-      if (!tapped) return;
-      const point = map.mouseEventToLatLng(event);
-      if (corners.length && map.distance(corners[corners.length - 1], point) < .5) return;
-      corners.push(point);
-      updateDraft();
-    }, { passive: true });
-    container.addEventListener('pointercancel', () => { pointerStart = null; }, { passive: true });
-  } else {
-    // Leaflet Draw previews an open line. Keep a separate, non-interactive
-    // closed preview so each new desktop corner shows the proposed area.
-    const desktopPreview = L.layerGroup().addTo(map);
-    map.on(L.Draw.Event.DRAWVERTEX, event => {
-      desktopPreview.clearLayers();
-      const vertices = [];
-      event.layers.eachLayer(marker => vertices.push(marker.getLatLng()));
-      if (vertices.length >= 3) {
-        L.polygon(vertices, { color: '#111113', weight: 2, fillColor: '#fff', fillOpacity: .12, interactive: false }).addTo(desktopPreview);
-      }
-    });
-    map.on(L.Draw.Event.DRAWSTOP, () => desktopPreview.clearLayers());
-    map.on(L.Draw.Event.CREATED, () => desktopPreview.clearLayers());
   }
+  map.on(L.Draw.Event.CREATED, event => updateAreaHandles(event.layer));
+  map.on(L.Draw.Event.DELETED, () => areaHandles.clearLayers());
+  document.getElementById('areaInstructions').textContent = `${mobile ? 'Tap' : 'Click'} Draw area, then ${mobile ? 'tap' : 'click'} the map to place corners. Drag any corner to adjust it.`;
+  mapHint.textContent = `${mobile ? 'Tap' : 'Click'} Draw area to start. Drag the map to look around.`;
+  startAreaButton.addEventListener('click', () => {
+    drawing = true;
+    map.doubleClickZoom.disable();
+    pickHomeMode = false;
+    setHomeBtn.classList.remove('active');
+    setHomeBtn.textContent = 'Set home point';
+    corners = [];
+    drawnItems.clearLayers();
+    areaHandles.clearLayers();
+    clearRoute();
+    startAreaButton.hidden = true;
+    cornerControls.hidden = false;
+    map.getContainer().classList.add('is-drawing');
+    updateDraft();
+  });
+  undoButton.addEventListener('click', () => { corners.pop(); updateDraft(); });
+  finishButton.addEventListener('click', () => {
+    if (corners.length < 3) return;
+    const polygon = L.polygon(corners, { color: '#111113', weight: 3, fillColor: '#fff', fillOpacity: .18 });
+    stopDrawing();
+    map.fire(L.Draw.Event.CREATED, { layer: polygon });
+    map.stop();
+    map.fitBounds(polygon.getBounds(), { padding: [24, 24], animate: false });
+  });
+  cancelButton.addEventListener('click', () => {
+    stopDrawing();
+    areaStatus.textContent = 'No area drawn yet';
+    areaStatus.classList.remove('ready');
+  });
+  const container = map.getContainer();
+  container.addEventListener('pointerdown', event => {
+    if (!drawing || event.target.closest('.leaflet-control, .area-corner-marker')) return;
+    pointerStart = { id: event.pointerId, x: event.clientX, y: event.clientY, time: performance.now(), scrollY: window.scrollY, moved: false };
+  }, { passive: true });
+  container.addEventListener('pointermove', event => {
+    if (pointerStart && event.pointerId === pointerStart.id && Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 8) pointerStart.moved = true;
+  }, { passive: true });
+  container.addEventListener('pointerup', event => {
+    if (!drawing || !pointerStart || event.pointerId !== pointerStart.id) return;
+    const tapped = window.isStationaryTap(pointerStart, event, performance.now() - pointerStart.time, window.scrollY);
+    pointerStart = null;
+    if (!tapped) return;
+    const point = map.mouseEventToLatLng(event);
+    if (corners.length && map.distance(corners[corners.length - 1], point) < .5) return;
+    corners.push(point);
+    updateDraft();
+  }, { passive: true });
+  container.addEventListener('pointercancel', () => { pointerStart = null; }, { passive: true });
+  if (!embedded) restorePlan(params.get('plan'));
 
   let points = [];
   let markers = [];
@@ -271,7 +297,7 @@
     waypointList.replaceChildren();
     selectedWaypoint.replaceChildren();
     document.getElementById('routeDistance').textContent = '0 m';
-    mapHint.textContent = mobile ? 'Tap Draw area to start. Drag the map to look around.' : 'Choose the polygon tool to draw a survey area.';
+    mapHint.textContent = drawnItems.getLayers().length ? 'Drag a corner to adjust the area, then generate a route.' : `${mobile ? 'Tap' : 'Click'} Draw area to start. Drag the map to look around.`;
   });
   function isKeyWaypoint(point, index) {
     return index === 0 || index === points.length - 1 || point.type === 'Turnaround' || point.type === 'SurveyEntry';
