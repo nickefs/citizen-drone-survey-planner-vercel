@@ -10,6 +10,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #111113; outline-
 .brand { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 700; letter-spacing: .13em; color: #111113; }
 .brand strong { color: #111113; }
 .brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid #c3c3ca; border-radius: 9px; font-size: 24px; line-height: 1; }
+.brand-mark img { width: 24px; height: 24px; display: block; }
 .sidebar-heading { margin: 32px 0 26px; }
 .preferences { display: grid; gap: 7px; margin-top: 18px; }
 .preference-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -94,8 +95,8 @@ input { font-size: 16px !important; }
 
 .map-top { position: absolute; z-index: 600; top: 18px; right: 18px; display: flex; align-items: flex-start; gap: 10px; max-width: calc(100% - 96px); }
 .map-hint { margin: 0; padding: 11px 13px; background: rgba(255,255,255,.96); box-shadow: 0 4px 16px rgba(0,0,0,.12); color: #111113; font-size: 12px; line-height: 1.45; }
-.map-button, .map-route-summary button, .waypoint-pages button { min-height: 42px; padding: 8px 12px; border: 1px solid #c3c3ca; background: #fff; color: #111113; font-size: 12px; font-weight: 700; white-space: nowrap; }
-.map-button:hover, .map-route-summary button:hover, .waypoint-pages button:hover:not(:disabled) { background: #f4f4f5; }
+.map-button, .waypoint-pages button { min-height: 42px; padding: 8px 12px; border: 1px solid #c3c3ca; background: #fff; color: #111113; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.map-button:hover, .waypoint-pages button:hover:not(:disabled) { background: #f4f4f5; }
 .map-primary { background: #111113; border-color: #111113; color: #fff; }
 .map-primary:hover { background: #2b2b2f; color: #fff; }
 #expandMapBtn span { font-size: 17px; vertical-align: -1px; }
@@ -103,7 +104,7 @@ input { font-size: 16px !important; }
 .workspace.map-expanded .sidebar { display: none; }
 .workspace.map-expanded .map-pane { width: 100%; height: 100%; min-height: 0; }
 body.map-expanded { overflow: hidden; }
-.map-route-summary { position: absolute; z-index: 600; right: 18px; bottom: 76px; display: flex; align-items: center; gap: 12px; padding: 7px 7px 7px 13px; background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.18); font-size: 12px; font-weight: 700; }
+.map-route-summary { position: absolute; z-index: 600; right: 18px; bottom: 28px; padding: 6px 9px; background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.18); font-size: 11px; font-weight: 700; line-height: 1.3; white-space: nowrap; pointer-events: none; }
 .map-gsd { position: absolute; z-index: 600; left: 18px; top: 18px; display: flex; align-items: baseline; gap: 6px; padding: 6px 8px; background: rgba(255,255,255,.96); box-shadow: 0 4px 16px rgba(0,0,0,.18); color: #111113; pointer-events: none; white-space: nowrap; }
 .map-gsd > span { font-size: 9px; font-weight: 800; letter-spacing: .08em; }
 .map-gsd strong { font-size: 12px; }
@@ -149,9 +150,12 @@ body.map-expanded { overflow: hidden; }
   .map-top { top: 12px; right: 12px; left: 12px; display: grid; grid-template-columns: 1fr auto; row-gap: 7px; max-width: none; justify-items: end; }
   .map-hint { grid-column: 1 / -1; grid-row: 2; justify-self: start; max-width: 100%; padding: 7px 9px; font-size: 11px; }
   #expandMapBtn { grid-column: 2; grid-row: 1; padding: 8px 9px; font-size: 11px; }
-  .map-route-summary { right: 12px; bottom: 92px; max-width: calc(100% - 24px); }
+  .map-route-summary { right: 12px; bottom: 28px; max-width: calc(100% - 24px); }
   .map-gsd { left: 12px; top: 18px; }
   .area-draw-controls { left: 12px; right: 12px; bottom: 12px; }
+}
+@media (max-width: 360px) {
+  .map-route-summary { padding: 5px 6px; font-size: 10px; }
 }
 
 html[data-effective-theme="dark"] { color-scheme: dark; background: #121417; color: #f4f4f5; }
@@ -192,7 +196,6 @@ html[data-effective-theme="dark"] .map-hint,
 html[data-effective-theme="dark"] .map-button,
 html[data-effective-theme="dark"] .map-gsd,
 html[data-effective-theme="dark"] .map-route-summary,
-html[data-effective-theme="dark"] .map-route-summary button,
 html[data-effective-theme="dark"] .waypoint-pages button,
 html[data-effective-theme="dark"] .waypoint-list button,
 html[data-effective-theme="dark"] .leaflet-popup-content-wrapper,
@@ -211,7 +214,6 @@ html[data-effective-theme="dark"] .setting-row button:hover:not(:disabled),
 html[data-effective-theme="dark"] .settings-toggle:hover,
 html[data-effective-theme="dark"] .export-action:hover:not(:disabled),
 html[data-effective-theme="dark"] .map-button:hover:not(.map-primary),
-html[data-effective-theme="dark"] .map-route-summary button:hover,
 html[data-effective-theme="dark"] .waypoint-pages button:hover:not(:disabled) { background: #30353c; }
 html[data-effective-theme="dark"] .waypoint-list button[aria-current="true"] { box-shadow: inset 3px 0 #f4f4f5; }
 html[data-effective-theme="dark"] .setting-row button.active { background: #30353c; }

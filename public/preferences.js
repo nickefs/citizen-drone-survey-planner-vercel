@@ -48,7 +48,6 @@
       'type.Waypoint': 'Waypoint',
       'map.full': 'Full map', 'map.close': 'Close full map', 'map.open': 'Open full map',
       'map.draw': 'Draw area', 'map.undo': 'Undo', 'map.finish': 'Finish area', 'map.cancel': 'Cancel',
-      'map.viewWaypoints': 'View waypoints',
       'map.startTouch': 'Tap Draw area to start. Drag the map to look around.',
       'map.startMouse': 'Click Draw area to start. Drag the map to look around.',
       'map.placeTouch': 'Tap the map to place a corner. Drag to move the map.',
@@ -118,7 +117,6 @@
       'type.Waypoint': 'Σημείο πτήσης',
       'map.full': 'Πλήρης χάρτης', 'map.close': 'Κλείσιμο χάρτη', 'map.open': 'Άνοιγμα πλήρους χάρτη',
       'map.draw': 'Ορισμός περιοχής', 'map.undo': 'Αναίρεση', 'map.finish': 'Ολοκλήρωση', 'map.cancel': 'Ακύρωση',
-      'map.viewWaypoints': 'Σημεία πτήσης',
       'map.startTouch': 'Πατήστε «Ορισμός περιοχής» και σημειώστε τα όρια στον χάρτη.',
       'map.startMouse': 'Επιλέξτε «Ορισμός περιοχής» και σημειώστε τα όρια στον χάρτη.',
       'map.placeTouch': 'Πατήστε στον χάρτη για νέα γωνία. Σύρετε τον χάρτη για μετακίνηση.',
@@ -182,7 +180,7 @@
     ['#waypointPanel > p', 'waypoints.hint'], ['#waypointPrev', 'waypoints.previous'], ['#waypointNext', 'waypoints.next'],
     ['#waypointPrev', 'waypoints.previous', 'aria-label'], ['#waypointNext', 'waypoints.next', 'aria-label'],
     ['#startAreaBtn', 'map.draw'], ['#undoCornerBtn', 'map.undo'], ['#finishAreaBtn', 'map.finish'],
-    ['#cancelAreaBtn', 'map.cancel'], ['#showWaypointsBtn', 'map.viewWaypoints']
+    ['#cancelAreaBtn', 'map.cancel']
   ];
   const render = () => {
     document.documentElement.lang = language;
