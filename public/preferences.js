@@ -13,7 +13,7 @@
       'altitude.label': 'Altitude above ground', 'altitude.unit': 'metres',
       'home.set': 'Set home point', 'home.pick': 'Select on map', 'home.clear': 'Clear',
       'home.setTitle': 'Choose a takeoff point on the map', 'home.clearTitle': 'Remove the home point',
-      'home.optional': 'Optional: set Home to start the survey near takeoff. The CSV contains survey waypoints only.',
+      'home.required': 'Set Home on the map before generating a route. The CSV contains survey waypoints only.',
       'home.pickHint': 'Choose a point on the map to set home.',
       'home.ready': 'Home set. Drag its marker to move it. The survey starts near Home.', 'home.popup': 'Home',
       'settings.toggle': 'Camera and overlap settings', 'settings.title': 'Camera and overlap',
@@ -26,9 +26,9 @@
       'settings.gsd': 'Estimated ground resolution',
       'settings.hint': 'These settings apply when you generate the route.',
       'route.title': 'Generate route', 'route.generate': 'Generate survey route',
-      'route.start': 'Draw an area to get started.', 'route.changed': 'Area changed. Generate a new route to continue.',
+      'route.start': 'Draw an area and set Home to get started.', 'route.changed': 'Area changed. Generate a new route to continue.',
       'route.noExport': 'Generate a route before downloading waypoints.',
-      'route.noArea': 'Draw a survey area first.', 'route.altitude': 'Enter an altitude between 1 and 500 metres.',
+      'route.noArea': 'Draw a survey area first.', 'route.noHome': 'Set Home on the map before generating the route.', 'route.altitude': 'Enter an altitude between 1 and 500 metres.',
       'route.calculating': 'Calculating your survey route…',
       'route.empty': 'No waypoints were generated. Try another area or flight setting.',
       'route.ready': 'Route ready. Review it on the map, then download the waypoints.',
@@ -59,12 +59,14 @@
       'map.instructionsTouch': 'Tap Draw area, then tap the map to place corners. Drag any corner to adjust it.',
       'map.instructionsMouse': 'Click Draw area, then click the map to place corners. Drag any corner to adjust it.',
       'map.dragCorner': 'Drag corner {number}',
+      'map.lockedCorner': 'Corner {number} is locked while the flight plan is active',
       'area.none': 'No area drawn yet', 'area.placed': '{count} {corners} placed',
       'area.selected': '{count} corners selected', 'area.cornerOne': 'corner', 'area.cornerMany': 'corners',
       'gsd.altitude': 'at {altitude} m altitude',
       'error.invalidRequest': 'Invalid request',
       'error.polygonCount': 'The area needs between 3 and 200 corners.',
-      'error.polygonCoordinates': 'The area contains invalid coordinates.'
+      'error.polygonCoordinates': 'The area contains invalid coordinates.',
+      'error.homeCoordinates': 'Home contains invalid coordinates.'
     },
     el: {
       title: 'Σχέδιο πτήσης drone | Survey Planner',
@@ -79,7 +81,7 @@
       'altitude.label': 'Ύψος πτήσης από το έδαφος', 'altitude.unit': 'μέτρα',
       'home.set': 'Σημείο απογείωσης', 'home.pick': 'Επιλέξτε στον χάρτη', 'home.clear': 'Αφαίρεση',
       'home.setTitle': 'Ορίστε το σημείο απογείωσης στον χάρτη', 'home.clearTitle': 'Αφαιρέστε το σημείο απογείωσης',
-      'home.optional': 'Προαιρετικά: ορίστε την απογείωση ώστε το σχέδιο να αρχίζει κοντά της. Το CSV περιέχει μόνο τα σημεία αποτύπωσης.',
+      'home.required': 'Ορίστε σημείο απογείωσης στον χάρτη πριν δημιουργήσετε σχέδιο πτήσης. Το CSV περιέχει μόνο τα σημεία αποτύπωσης.',
       'home.pickHint': 'Επιλέξτε το σημείο απογείωσης στον χάρτη.',
       'home.ready': 'Ορίστηκε η απογείωση. Σύρετε το εικονίδιο για αλλαγή. Η αποτύπωση ξεκινά κοντά της.', 'home.popup': 'Απογείωση',
       // Keep camera controls and their technical labels in English.
@@ -93,10 +95,11 @@
       'settings.gsd': 'Estimated ground resolution',
       'settings.hint': 'These settings apply when you generate the route.',
       'route.title': 'Δημιουργία σχεδίου πτήσης', 'route.generate': 'Δημιουργία σχεδίου πτήσης',
-      'route.start': 'Πρώτα ορίστε την περιοχή στον χάρτη.',
+      'route.start': 'Ορίστε περιοχή πτήσης και σημείο απογείωσης για να ξεκινήσετε.',
       'route.changed': 'Η περιοχή άλλαξε. Δημιουργήστε νέο σχέδιο πτήσης.',
       'route.noExport': 'Δημιουργήστε σχέδιο πτήσης πριν κατεβάσετε τα σημεία.',
       'route.noArea': 'Ορίστε πρώτα την περιοχή πτήσης.',
+      'route.noHome': 'Ορίστε πρώτα το σημείο απογείωσης στον χάρτη.',
       'route.altitude': 'Το ύψος πτήσης πρέπει να είναι από 1 έως 500 μέτρα.',
       'route.calculating': 'Δημιουργείται το σχέδιο πτήσης…',
       'route.empty': 'Δεν βρέθηκαν σημεία πτήσης. Αλλάξτε την περιοχή ή τις ρυθμίσεις και δοκιμάστε ξανά.',
@@ -128,12 +131,14 @@
       'map.instructionsTouch': 'Πατήστε «Ορισμός περιοχής» και σημειώστε τα όρια με αγγίγματα. Σύρετε μια γωνία για διόρθωση.',
       'map.instructionsMouse': 'Επιλέξτε «Ορισμός περιοχής» και σημειώστε τα όρια με κλικ. Σύρετε μια γωνία για διόρθωση.',
       'map.dragCorner': 'Σύρετε τη γωνία {number}',
+      'map.lockedCorner': 'Η γωνία {number} είναι κλειδωμένη όσο υπάρχει σχέδιο πτήσης',
       'area.none': 'Δεν έχει οριστεί περιοχή', 'area.placed': 'Γωνίες: {count}',
       'area.selected': 'Περιοχή με {count} γωνίες', 'area.cornerOne': 'γωνία', 'area.cornerMany': 'γωνίες',
       'gsd.altitude': 'Ύψος πτήσης {altitude} m',
       'error.invalidRequest': 'Δεν στάλθηκαν σωστά τα στοιχεία. Δοκιμάστε ξανά.',
       'error.polygonCount': 'Η περιοχή πρέπει να έχει από 3 έως 200 γωνίες.',
-      'error.polygonCoordinates': 'Κάποια σημεία της περιοχής δεν είναι έγκυρα.'
+      'error.polygonCoordinates': 'Κάποια σημεία της περιοχής δεν είναι έγκυρα.',
+      'error.homeCoordinates': 'Το σημείο απογείωσης δεν έχει έγκυρες συντεταγμένες.'
     }
   };
   const saved = key => { try { return localStorage.getItem(key); } catch { return null; } };

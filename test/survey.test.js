@@ -32,3 +32,9 @@ test("home selects a survey start near takeoff without exporting a home waypoint
 test("rejects malformed polygon coordinates", () => {
   assert.throws(() => runSurvey({ polygon: [{ lat: 91, lon: 0 }, ...polygon] }), { status: 400 });
 });
+
+test("requires valid Home coordinates before generating a survey", () => {
+  assert.throws(() => runSurvey({ polygon, altitude_m: 10 }), { status: 400, message: "Home point is required" });
+  assert.throws(() => runSurvey({ polygon, home: { lat: "39.1012", lon: 26.4398 } }), { status: 400, message: "Invalid home coordinates" });
+  assert.throws(() => runSurvey({ polygon, home: { lat: 91, lon: 26.4398 } }), { status: 400, message: "Invalid home coordinates" });
+});
