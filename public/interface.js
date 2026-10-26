@@ -95,6 +95,18 @@
   const draftShapes = L.layerGroup().addTo(draftLayers);
   const draftHandles = L.layerGroup().addTo(draftLayers);
   const areaHandles = L.layerGroup().addTo(map);
+  let areaCornersLocked = false;
+  function setAreaCornersLocked(locked) {
+    areaCornersLocked = locked;
+    areaHandles.eachLayer(marker => {
+      if (locked) marker.dragging.disable();
+      else marker.dragging.enable();
+      marker.getElement()?.classList.toggle('is-locked', locked);
+      const title = ui.t(locked ? 'map.lockedCorner' : 'map.dragCorner', { number: marker.cornerIndex + 1 });
+      marker.options.title = title;
+      marker.getElement()?.setAttribute('title', title);
+    });
+  }
   function cornerHandle(corner, index, onMove) {
     const marker = L.marker(corner, {
       draggable: true,
@@ -156,11 +168,11 @@
         updated[movedIndex] = latlng;
         layer.setLatLngs(updated);
       }).addTo(areaHandles);
-      handle.on('dragstart', () => { if (lastWaypoints.length) clearRoute(); });
       handle.on('dragend', () => {
         ui.message(areaStatus, 'area.selected', { count: layer.getLatLngs()[0].length });
       });
     });
+    setAreaCornersLocked(areaCornersLocked);
   }
   map.on(L.Draw.Event.CREATED, event => updateAreaHandles(event.layer));
   map.on(L.Draw.Event.DELETED, () => areaHandles.clearLayers());
@@ -294,6 +306,7 @@
   prevButton.addEventListener('click', () => { pageIndex--; renderList(); });
   nextButton.addEventListener('click', () => { pageIndex++; renderList(); });
   document.addEventListener('survey:clear', () => {
+    setAreaCornersLocked(false);
     points = [];
     markers = [];
     selectedMarker = null;
@@ -308,6 +321,7 @@
     return index === 0 || index === points.length - 1 || point.type === 'Turnaround' || point.type === 'SurveyEntry';
   }
   document.addEventListener('survey:route', event => {
+    setAreaCornersLocked(true);
     points = event.detail.waypoints;
     selectedMarker = null;
     selectedIndex = 0;
@@ -332,10 +346,11 @@
     ui.message(mapHint, 'map.routeReady');
     selectWaypoint(0);
   });
+  document.addEventListener('survey:calculating', () => setAreaCornersLocked(true));
   document.addEventListener('survey:language', () => {
     if (drawing) updateDraft();
     [draftHandles, areaHandles].forEach(group => group.eachLayer(marker => {
-      const title = ui.t('map.dragCorner', { number: marker.cornerIndex + 1 });
+      const title = ui.t(group === areaHandles && areaCornersLocked ? 'map.lockedCorner' : 'map.dragCorner', { number: marker.cornerIndex + 1 });
       marker.options.title = title;
       marker.getElement()?.setAttribute('title', title);
     }));

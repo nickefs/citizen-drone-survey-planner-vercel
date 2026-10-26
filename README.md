@@ -1,6 +1,6 @@
 # UAV Survey Waypoint Generator
 
-A web-based tool for planning UAV mapping surveys. The user draws a survey polygon on an interactive satellite map, optionally selects a home position, and the application generates an optimized sequence of survey waypoints.
+A web-based tool for planning UAV mapping surveys. The user draws a survey polygon on an interactive satellite map, selects a Home position, and the application generates an optimized sequence of survey waypoints.
 
 ## Preview
 
@@ -55,7 +55,7 @@ flowchart TD
 
 - Interactive satellite map using Leaflet and Leaflet Draw
 - Polygon-based survey area definition
-- Optional UAV home-position selection
+- Required UAV Home-position selection before route generation
 - Configurable flight altitude
 - Automatic survey-line spacing from camera geometry and image overlap
 - Automatic camera-trigger spacing
@@ -70,7 +70,7 @@ flowchart TD
 ```text
 Browser / Leaflet
        |
-       | polygon + altitude + optional home
+       | polygon + altitude + home
        v
 Node.js / Express API
        |
@@ -207,7 +207,7 @@ Example request body:
 }
 ```
 
-The response contains an ordered `waypoints` array with latitude, longitude, altitude and waypoint type.
+Home is required. The response contains an ordered `waypoints` array with latitude, longitude, altitude and waypoint type.
 
 ## Deployment
 

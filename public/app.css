@@ -138,6 +138,7 @@ body.map-expanded { overflow: hidden; }
 .area-corner-marker { display: grid; place-items: center; border: 2px solid #111113; border-radius: 50%; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.4); cursor: grab; touch-action: none; }
 .area-corner-marker span { width: 8px; height: 8px; border-radius: 50%; background: #111113; pointer-events: none; }
 .area-corner-marker.leaflet-drag-target, .leaflet-dragging .area-corner-marker { cursor: grabbing; }
+.area-corner-marker.is-locked { cursor: default; pointer-events: none; }
 .home-map-marker { display: grid; place-items: center; border: 2px solid #fff; border-radius: 50%; background: #111113; color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.45); cursor: grab; }
 .home-map-marker svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 .home-map-marker.leaflet-drag-target, .leaflet-dragging .home-map-marker { cursor: grabbing; }
