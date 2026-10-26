@@ -158,13 +158,34 @@
     function setHome(latlng) {
       homeLatLng = latlng;
       if (homeMarker) map.removeLayer(homeMarker);
-      homeMarker = L.marker(latlng, { draggable: true }).addTo(map);
-      homeMarker.bindPopup(ui.t('home.popup')).openPopup();
+      homeMarker = L.marker(latlng, {
+        draggable: true,
+        title: ui.t('home.popup'),
+        icon: L.divIcon({
+          className: 'home-map-marker',
+          html: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5M5.5 9.5V21h13V9.5M9.5 21v-7h5v7"/></svg>',
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+          popupAnchor: [0, -20]
+        })
+      }).addTo(map);
+      homeMarker.bindPopup(ui.t('home.popup'));
       homeMarker.on("dragend", () => {
         homeLatLng = homeMarker.getLatLng();
         if (lastWaypoints.length) clearRoute();
       });
       if (lastWaypoints.length) clearRoute();
+    }
+
+    function routeViewBounds(waypoints) {
+      const bounds = L.latLngBounds(waypoints.map(point => [point.lat, point.lon]));
+      if (homeLatLng) {
+        const diagonal = map.distance(bounds.getSouthWest(), bounds.getNorthEast());
+        if (map.distance(homeLatLng, bounds.getCenter()) <= Math.max(200, diagonal * 3)) {
+          bounds.extend(homeLatLng);
+        }
+      }
+      return bounds;
     }
 
     const setHomeBtn = document.getElementById("setHomeBtn");
@@ -375,9 +396,8 @@
         if (!Array.isArray(data.waypoints) || !data.waypoints.length) throw new Error('route.empty');
         lastWaypoints = data.waypoints;
         surveyLayer.clearLayers();
-        const latlngs = data.waypoints.map(wp => [wp.lat, wp.lon]);
         document.dispatchEvent(new CustomEvent('survey:route', { detail: { waypoints: data.waypoints } }));
-        map.fitBounds(L.latLngBounds(latlngs), { padding: [28, 28] });
+        map.fitBounds(routeViewBounds(data.waypoints), { padding: [28, 28] });
         waypointCount.textContent = String(lastWaypoints.length);
         routeResult.hidden = false;
         exportBtn.disabled = false;
@@ -400,7 +420,10 @@
   <script>
     document.addEventListener('survey:language', () => {
       updateGsdReadout();
-      if (homeMarker) homeMarker.setPopupContent(ui.t('home.popup'));
+      if (homeMarker) {
+        homeMarker.setPopupContent(ui.t('home.popup'));
+        homeMarker.getElement()?.setAttribute('title', ui.t('home.popup'));
+      }
     });
     ui.init();
   </script>

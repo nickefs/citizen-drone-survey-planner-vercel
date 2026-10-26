@@ -147,48 +147,8 @@ int main(int argc, char* argv[]) {
     params.refly90            = false;
     params.entryCorner        = EntryCorner::TopLeft;
 
-    // Αν υπάρχει Home, διάλεξε entryCorner ως το bbox corner του polygon (σε local NED)
-    // που είναι πιο κοντά στο Home.
-    if (hasHome && polygon.size() >= 3) {
-        const Geo origin = polygon.front();
-        const nqt::Pt homeNed = nqt::convertGeoToNed(home, origin);
-
-        std::vector<nqt::Pt> polyNed;
-        polyNed.reserve(polygon.size() + 1);
-        for (size_t i = 0; i < polygon.size(); ++i) {
-            const nqt::Pt p = (i == 0) ? nqt::Pt{0, 0} : nqt::convertGeoToNed(polygon[i], origin);
-            polyNed.push_back(p);
-        }
-        polyNed = nqt::closePolygon(polyNed);
-
-        nqt::Pt bmin{}, bmax{};
-        nqt::polygonBounds(polyNed, bmin, bmax);
-
-        const nqt::Pt tl{bmin.x, bmax.y};
-        const nqt::Pt tr{bmax.x, bmax.y};
-        const nqt::Pt br{bmax.x, bmin.y};
-        const nqt::Pt bl{bmin.x, bmin.y};
-
-        auto d2 = [](const nqt::Pt& a, const nqt::Pt& b) {
-            const double dx = a.x - b.x, dy = a.y - b.y;
-            return dx * dx + dy * dy;
-        };
-
-        double best = d2(homeNed, tl);
-        params.entryCorner = EntryCorner::TopLeft;
-
-        const double dtr = d2(homeNed, tr);
-        if (dtr < best) { best = dtr; params.entryCorner = EntryCorner::TopRight; }
-
-        const double dbr = d2(homeNed, br);
-        if (dbr < best) { best = dbr; params.entryCorner = EntryCorner::BottomRight; }
-
-        const double dbl = d2(homeNed, bl);
-        if (dbl < best) { /*best = dbl;*/ params.entryCorner = EntryCorner::BottomLeft; }
-    }
-
     // 4) Δοκίμασε διαφορετικές γωνίες και κράτα αυτή με το μικρότερο "cost"
-    // cost = συνολικό μήκος διαδρομής + penalty για στροφές (approximated)
+    // cost = διαδρομή έρευνας + στροφές + μετάβαση από Home στο πρώτο waypoint.
     constexpr double kTurnPenalty_m = 25.0;
     auto score = [&](const std::vector<Waypoint>& wps) -> double {
         if (wps.size() < 2) return std::numeric_limits<double>::infinity();
@@ -206,9 +166,18 @@ int main(int argc, char* argv[]) {
     auto evalAngle = [&](double angDeg) -> std::pair<double, std::vector<Waypoint>> {
         SurveyParams p = params;
         p.gridAngle_deg = angDeg;
-        auto w = generateSurvey(polygon, cam, p);
-        const double s = score(w);
-        return {s, std::move(w)};
+        std::pair<double, std::vector<Waypoint>> best{std::numeric_limits<double>::infinity(), {}};
+        const EntryCorner corners[] = {EntryCorner::TopLeft, EntryCorner::TopRight,
+                                       EntryCorner::BottomRight, EntryCorner::BottomLeft};
+        for (const auto corner : corners) {
+            if (!hasHome && corner != EntryCorner::TopLeft) break;
+            p.entryCorner = corner;
+            auto w = generateSurvey(polygon, cam, p);
+            double s = score(w);
+            if (hasHome && !w.empty()) s += nqt::distance(home, w.front().coord);
+            if (s < best.first) best = {s, std::move(w)};
+        }
+        return best;
     };
 
     // coarse sweep
