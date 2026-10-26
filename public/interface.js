@@ -293,10 +293,6 @@
   }
   prevButton.addEventListener('click', () => { pageIndex--; renderList(); });
   nextButton.addEventListener('click', () => { pageIndex++; renderList(); });
-  document.getElementById('showWaypointsBtn').addEventListener('click', () => {
-    if (workspace.classList.contains('map-expanded')) setFullMap(false);
-    waypointPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
   document.addEventListener('survey:clear', () => {
     points = [];
     markers = [];

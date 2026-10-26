@@ -5,6 +5,12 @@
   <title>UAV Survey Planner | Plan and export waypoints</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Draw a survey area, generate UAV waypoints and export a flight route for review." />
+  <meta name="theme-color" content="#111113" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Survey Planner" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="/icons/survey-mark.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <link rel="stylesheet" href="/app.css" />
@@ -14,7 +20,7 @@
 
   <main class="workspace">
     <aside class="sidebar" aria-label="Survey controls">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">◎</span><span>SURVEY <strong>PLANNER</strong></span></div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><img src="/icons/survey-mark.svg" alt="" /></span><span>SURVEY <strong>PLANNER</strong></span></div>
       <div class="preferences" aria-label="Display preferences">
         <div class="preference-row"><span class="preference-label language">Language</span><div class="preference-options" role="group" aria-label="Language"><button type="button" data-language-choice="en" aria-pressed="true">EN</button><button type="button" data-language-choice="el" aria-pressed="false">ΕΛ</button></div></div>
         <div class="preference-row"><span class="preference-label appearance">Appearance</span><div class="preference-options" role="group" aria-label="Appearance"><button type="button" data-theme-choice="system" aria-pressed="true">Auto</button><button type="button" data-theme-choice="light" aria-pressed="false">Light</button><button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button></div></div>
@@ -30,7 +36,7 @@
       <section class="control-section action-section" aria-labelledby="route-title"><div class="section-heading"><span class="step-number">03</span><h2 id="route-title">Generate route</h2></div><button id="floatingSurveyBtn" class="primary-action" type="button" onclick="sendPolygonToServer()">Generate survey route <span aria-hidden="true">→</span></button><p id="routeStatus" class="route-status" role="status" aria-live="polite">Draw an area to get started.</p><div id="routeResult" class="route-result" hidden><div><span>Waypoints</span><strong id="waypointCount">0</strong></div><div><span>Route length</span><strong id="routeDistance">0 m</strong></div></div><button id="exportCsvBtn" class="export-action" type="button" disabled>Download waypoint CSV <span aria-hidden="true">↓</span></button><p class="safety-note">Review the route against terrain, airspace, and aircraft limits before flying.</p></section>
       <section id="waypointPanel" class="control-section waypoint-panel" aria-labelledby="waypoints-title" hidden><div class="section-heading"><span class="step-number">04</span><h2 id="waypoints-title">Waypoints</h2></div><p>Select a waypoint to locate it on the map. The CSV contains the full route.</p><div id="selectedWaypoint" class="selected-waypoint" role="status" aria-live="polite"></div><ol id="waypointList" class="waypoint-list"></ol><div class="waypoint-pages"><button id="waypointPrev" type="button" aria-label="Previous waypoints">Previous</button><span id="waypointRange"></span><button id="waypointNext" type="button" aria-label="Next waypoints">Next</button></div></section>
     </aside>
-    <section class="map-pane" aria-label="Interactive survey map"><div id="map"></div><div class="map-top"><p id="mapHint" class="map-hint">Choose Draw area to outline a survey area.</p><button id="expandMapBtn" class="map-button" type="button" aria-pressed="false"><span id="expandMapLabel">Full map</span> <span id="expandMapIcon" aria-hidden="true">⤢</span></button></div><div id="areaDrawControls" class="area-draw-controls"><button id="startAreaBtn" class="map-button map-primary" type="button">Draw area</button><div id="cornerControls" hidden><button id="undoCornerBtn" class="map-button" type="button">Undo</button><button id="finishAreaBtn" class="map-button map-primary" type="button">Finish area</button><button id="cancelAreaBtn" class="map-button" type="button">Cancel</button></div></div><div id="mapGsd" class="map-gsd" aria-live="polite"><span>GSD</span><strong id="mapGsdValue">-- cm/px</strong><small id="mapGsdAltitude">at 10 m altitude</small></div><div id="mapRouteSummary" class="map-route-summary" hidden><span id="mapRouteSummaryText"></span><button id="showWaypointsBtn" type="button">View waypoints</button></div></section>
+    <section class="map-pane" aria-label="Interactive survey map"><div id="map"></div><div class="map-top"><p id="mapHint" class="map-hint">Choose Draw area to outline a survey area.</p><button id="expandMapBtn" class="map-button" type="button" aria-pressed="false"><span id="expandMapLabel">Full map</span> <span id="expandMapIcon" aria-hidden="true">⤢</span></button></div><div id="areaDrawControls" class="area-draw-controls"><button id="startAreaBtn" class="map-button map-primary" type="button">Draw area</button><div id="cornerControls" hidden><button id="undoCornerBtn" class="map-button" type="button">Undo</button><button id="finishAreaBtn" class="map-button map-primary" type="button">Finish area</button><button id="cancelAreaBtn" class="map-button" type="button">Cancel</button></div></div><div id="mapGsd" class="map-gsd" aria-live="polite"><span>GSD</span><strong id="mapGsdValue">-- cm/px</strong><small id="mapGsdAltitude">at 10 m altitude</small></div><div id="mapRouteSummary" class="map-route-summary" role="status" aria-live="polite" hidden><span id="mapRouteSummaryText"></span></div></section>
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
