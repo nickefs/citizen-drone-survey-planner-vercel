@@ -66,7 +66,7 @@
     requestAnimationFrame(() => map.invalidateSize());
     setTimeout(() => {
       map.invalidateSize();
-      if (expanded && lastWaypoints.length) map.fitBounds(L.latLngBounds(lastWaypoints.map(point => [point.lat, point.lon])), { padding: [32, 32] });
+      if (expanded && lastWaypoints.length) map.fitBounds(routeViewBounds(lastWaypoints), { padding: [32, 32] });
       else if (expanded && drawnItems.getLayers().length) map.fitBounds(drawnItems.getBounds(), { padding: [32, 32] });
     }, 150);
   }
@@ -143,6 +143,7 @@
     startAreaButton.hidden = false;
     cornerControls.hidden = true;
     map.getContainer().classList.remove('is-drawing');
+    setHomeBtn.disabled = false;
     ui.message(mapHint, 'map.areaReady');
   }
   function updateAreaHandles(layer) {
@@ -178,6 +179,7 @@
     startAreaButton.hidden = true;
     cornerControls.hidden = false;
     map.getContainer().classList.add('is-drawing');
+    setHomeBtn.disabled = true;
     updateDraft();
   });
   undoButton.addEventListener('click', () => { corners.pop(); updateDraft(); });

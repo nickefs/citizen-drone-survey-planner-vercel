@@ -60,7 +60,7 @@ flowchart TD
 - Automatic survey-line spacing from camera geometry and image overlap
 - Automatic camera-trigger spacing
 - Automatic search for an efficient survey grid angle
-- Home-aware selection of the survey entry corner
+- Home-aware survey start selection using the actual first waypoint; Home is not exported as a takeoff or return waypoint
 - Turnaround and interior trigger waypoints
 - CSV waypoint export
 - Docker-based deployment
