@@ -32,6 +32,7 @@
       zoom: map.getZoom()
     };
   }
+  let restoredView = false;
   function restorePlan(raw) {
     if (!raw || raw.length > 20000) return;
     try {
@@ -50,7 +51,7 @@
         clearHomeBtn.disabled = false;
         ui.message(homeStatus, 'home.ready');
       }
-      if (Array.isArray(plan.center) && plan.center.length === 2 && Number.isFinite(plan.center[0]) && Number.isFinite(plan.center[1]) && Number.isFinite(plan.zoom)) map.setView(plan.center, plan.zoom);
+      if (Array.isArray(plan.center) && plan.center.length === 2 && Number.isFinite(plan.center[0]) && Number.isFinite(plan.center[1]) && Number.isFinite(plan.zoom)) { map.setView(plan.center, plan.zoom); restoredView = true; }
       if (plan.routeReady && drawnItems.getLayers().length) setTimeout(() => sendPolygonToServer(), 200);
     } catch (error) {
       console.warn('Could not restore the map plan:', error);
@@ -228,6 +229,67 @@
   }, { passive: true });
   container.addEventListener('pointercancel', () => { pointerStart = null; }, { passive: true });
   if (!embedded) restorePlan(params.get('plan'));
+
+  // Live user location: centre on the first fix (unless a shared plan set the view) and keep a dot updated.
+  const locateButton = document.getElementById('locateBtn');
+  let userMarker = null;
+  let userAccuracy = null;
+  let userLatLng = null;
+  let followPending = !restoredView;
+  let locationWatch = null;
+  let locationHintShown = false;
+  function onLocation(position) {
+    const { latitude, longitude, accuracy } = position.coords;
+    userLatLng = L.latLng(latitude, longitude);
+    if (!userMarker) {
+      userAccuracy = L.circle(userLatLng, { radius: accuracy, color: '#1a73e8', weight: 1, fillColor: '#1a73e8', fillOpacity: .12, interactive: false }).addTo(map);
+      userMarker = L.marker(userLatLng, {
+        icon: L.divIcon({ className: 'user-location-marker', html: '<span></span>', iconSize: [18, 18], iconAnchor: [9, 9] }),
+        keyboard: false, zIndexOffset: -100
+      }).addTo(map).bindTooltip(ui.t('map.you'));
+    } else {
+      userMarker.setLatLng(userLatLng);
+      userAccuracy.setLatLng(userLatLng).setRadius(accuracy);
+    }
+    locateButton.classList.add('active');
+    if (locationHintShown) {
+      locationHintShown = false;
+      ui.message(mapHint, drawnItems.getLayers().length ? 'map.areaReady' : (mobile ? 'map.startTouch' : 'map.startMouse'));
+    }
+    if (followPending) {
+      followPending = false;
+      map.setView(userLatLng, Math.max(map.getZoom(), 17));
+    }
+  }
+  function onLocationError(error) {
+    locateButton.classList.remove('active');
+    if (error.code === error.PERMISSION_DENIED) {
+      stopLocation();
+      if (followPending) { followPending = false; ui.message(mapHint, 'map.locateDenied'); locationHintShown = true; }
+    } else if (followPending) {
+      followPending = false;
+      ui.message(mapHint, 'map.locateUnavailable');
+      locationHintShown = true;
+    }
+  }
+  function stopLocation() {
+    if (locationWatch !== null) navigator.geolocation.clearWatch(locationWatch);
+    locationWatch = null;
+  }
+  function startLocation() {
+    if (!('geolocation' in navigator) || locationWatch !== null) return;
+    locationWatch = navigator.geolocation.watchPosition(onLocation, onLocationError, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+  }
+  if (locateButton) {
+    locateButton.setAttribute('aria-label', ui.t('map.locate'));
+    locateButton.title = ui.t('map.locate');
+    if (!('geolocation' in navigator)) locateButton.hidden = true;
+    locateButton.addEventListener('click', () => {
+      if (userLatLng) map.setView(userLatLng, Math.max(map.getZoom(), 17));
+      else { followPending = true; startLocation(); }
+    });
+  }
+  startLocation();
 
   let points = [];
   let markers = [];

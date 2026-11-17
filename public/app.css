@@ -99,6 +99,14 @@ input { font-size: 16px !important; }
 .map-button:hover, .waypoint-pages button:hover:not(:disabled) { background: #f4f4f5; }
 .map-primary { background: #111113; border-color: #111113; color: #fff; }
 .map-primary:hover { background: #2b2b2f; color: #fff; }
+.locate-button { display: grid; place-items: center; width: 42px; padding: 0; }
+.locate-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.locate-button.active { color: #1a73e8; border-color: #1a73e8; }
+.user-location-marker { position: relative; }
+.user-location-marker span { position: absolute; inset: 0; border: 3px solid #fff; border-radius: 50%; background: #1a73e8; box-shadow: 0 1px 6px rgba(0,0,0,.5); }
+.user-location-marker::before { content: ''; position: absolute; inset: -8px; border-radius: 50%; background: rgba(26,115,232,.35); animation: user-location-pulse 2s ease-out infinite; }
+@keyframes user-location-pulse { from { transform: scale(.5); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .user-location-marker::before { animation: none; opacity: .5; } }
 #expandMapBtn span { font-size: 17px; vertical-align: -1px; }
 .workspace.map-expanded { position: fixed; z-index: 5000; inset: 0; display: block; width: 100vw; height: 100dvh; min-height: 0; }
 .workspace.map-expanded .sidebar { display: none; }
