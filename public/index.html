@@ -61,6 +61,7 @@
     let pickHomeMode = false;
     let routeRequestSerial = 0;
     function clampNumberInput(input, min, max) {
+      if (input.value.trim() === '') return;
       const v = Number(input.value);
       if (!Number.isFinite(v)) return;
       if (v < min) input.value = String(min);
@@ -69,7 +70,6 @@
     function bindClamp(id, min, max) {
       const el = document.getElementById(id);
       const clamp = () => clampNumberInput(el, min, max);
-      el.addEventListener('input', clamp);
       el.addEventListener('blur', clamp);
     }
     function readPositiveNumber(id, fallback) {
